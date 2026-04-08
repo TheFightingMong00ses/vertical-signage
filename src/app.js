@@ -75,7 +75,7 @@
     if (typeof settings.fontScale === "number") {
       document.documentElement.style.setProperty(
         "--vs-font-scale",
-        String(settings.fontScale)
+        String(settings.fontScale),
       );
     }
   }
@@ -104,4 +104,3 @@
 
   loadConfig();
 })();
-
