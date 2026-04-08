@@ -3,7 +3,7 @@ export default [
     {
 
         files: ["src/**/*.js"],
-        ignores: ["node_modules/**"],]
+        ignores: ["node_modules/**"],
         languageOptions: {
             ecmaVersion: "latest",
             sourceType: "script"
@@ -11,6 +11,6 @@ export default [
         rules: {
             "no-unused-vars": "warn",
             "no-console": "off",
-
+        }
     }
-]
+];
