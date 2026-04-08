@@ -5,6 +5,7 @@
   "scripts": {
     "test": "jest",
     "lint": "eslint .",
+    "lint:html": "htmlhint \"src/**/*.html\"",
     "format:check": "prettier --check .",
     "validate:config": "ajv validate -s config/config.schema.json -d config/config.json"
   },
