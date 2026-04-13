@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digital Sign - Clock &amp; Weather</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: #1a1a2e;
+        color: #e0e0e0;
+        font-family: Arial, Helvetica, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        /* Vertical orientation as noted in requirements */
+        min-height: 100vh;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #a0c4ff;
+      }
+
+      /* ---------- Clock Section ---------- */
+      #clock-section {
+        margin-bottom: 30px;
+        text-align: center;
+      }
+
+      #date-display {
+        font-size: 1.2rem;
+        margin-top: 10px;
+        color: #ccc;
+      }
+
+      /* ---------- Weather Section ---------- */
+      #weather-section {
+        background: #16213e;
+        border-radius: 12px;
+        padding: 20px 30px;
+        text-align: center;
+        min-width: 280px;
+      }
+
+      #weather-section h2 {
+        font-size: 1.2rem;
+        color: #a0c4ff;
+        margin-bottom: 12px;
+      }
+
+      .weather-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px solid #2a2a4a;
+      }
+
+      .weather-row:last-child {
+        border-bottom: none;
+      }
+
+      .weather-label {
+        color: #999;
+      }
+
+      .weather-value {
+        font-weight: bold;
+      }
+
+      #weather-error {
+        color: #ff6b6b;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ==================== CLOCK ==================== -->
+    <div id="clock-section">
+      <h1>Clock</h1>
+      <!--
+            Canvas clock based on the approach from:
+            https://www.w3schools.com/graphics/canvas_clock.asp
+
+            How it works:
+            1. A <canvas> element provides a 2D drawing surface.
+            2. Every second, we clear the canvas and redraw:
+               - The clock face (circle + hour markers)
+               - Hour, minute, and second hands (rotated lines)
+            3. Angles are calculated from the current Date object.
+        -->
+      <canvas id="clockCanvas" width="200" height="200"></canvas>
+      <div id="date-display"></div>
+    </div>
+
+    <!-- ==================== WEATHER ==================== -->
+    <div id="weather-section">
+      <h2>Weather &mdash; Denver, CO</h2>
+      <!--
+            Weather data from Open-Meteo (no API key needed).
+            API URL returns JSON with current conditions.
+            We fetch() it and display the values.
+        -->
+      <div id="weather-data">Loading weather...</div>
+      <div id="weather-error"></div>
+    </div>
+
+    <script>
+      /* ==============================================
+           CLOCK - Canvas-based analog clock
+           ==============================================
+           Reference: https://www.w3schools.com/graphics/canvas_clock.asp
+
+           Key concepts:
+           - canvas.getContext('2d') gives us drawing methods
+           - We translate the origin to the center so rotation is easy
+           - Each hand is drawn by rotating the context to the
+             correct angle, drawing a line, then restoring state
+        */
+
+      (function initClock() {
+        var canvas = document.getElementById("clockCanvas");
+        var ctx = canvas.getContext("2d");
+        var radius = canvas.height / 2;
+
+        // Move origin to center of canvas
+        ctx.translate(radius, radius);
+
+        // Shrink radius slightly so strokes aren't clipped
+        radius = radius * 0.9;
+
+        // Draw once immediately, then every 1 second
+        drawClock();
+        setInterval(drawClock, 1000);
+
+        function drawClock() {
+          drawFace(ctx, radius);
+          drawNumbers(ctx, radius);
+          drawTime(ctx, radius);
+          updateDateDisplay();
+        }
+
+        function drawFace(ctx, radius) {
+          // Outer circle
+          ctx.beginPath();
+          ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+          ctx.fillStyle = "#16213e";
+          ctx.fill();
+
+          // Border
+          ctx.strokeStyle = "#a0c4ff";
+          ctx.lineWidth = radius * 0.04;
+          ctx.stroke();
+
+          // Center dot
+          ctx.beginPath();
+          ctx.arc(0, 0, radius * 0.05, 0, 2 * Math.PI);
+          ctx.fillStyle = "#a0c4ff";
+          ctx.fill();
+        }
+
+        function drawNumbers(ctx, radius) {
+          ctx.font = radius * 0.15 + "px Arial";
+          ctx.fillStyle = "#e0e0e0";
+          ctx.textBaseline = "middle";
+          ctx.textAlign = "center";
+          for (var num = 1; num <= 12; num++) {
+            var ang = (num * Math.PI) / 6; // 30 degrees per hour
+            ctx.fillText(
+              num.toString(),
+              radius * 0.78 * Math.sin(ang),
+              -radius * 0.78 * Math.cos(ang),
+            );
+          }
+        }
+
+        function drawTime(ctx, radius) {
+          var now = new Date();
+          var hour = now.getHours() % 12;
+          var minute = now.getMinutes();
+          var second = now.getSeconds();
+
+          // Hour hand - short and thick
+          var hourAngle = (hour * Math.PI) / 6 + (minute * Math.PI) / 360;
+          drawHand(ctx, hourAngle, radius * 0.5, radius * 0.05, "#e0e0e0");
+
+          // Minute hand - longer, medium width
+          var minuteAngle = (minute * Math.PI) / 30 + (second * Math.PI) / 1800;
+          drawHand(ctx, minuteAngle, radius * 0.7, radius * 0.035, "#a0c4ff");
+
+          // Second hand - longest, thin
+          var secondAngle = (second * Math.PI) / 30;
+          drawHand(ctx, secondAngle, radius * 0.8, radius * 0.02, "#ff6b6b");
+        }
+
+        function drawHand(ctx, angle, length, width, color) {
+          ctx.beginPath();
+          ctx.lineWidth = width;
+          ctx.lineCap = "round";
+          ctx.strokeStyle = color;
+          ctx.moveTo(0, 0);
+          ctx.rotate(angle);
+          ctx.lineTo(0, -length);
+          ctx.stroke();
+          ctx.rotate(-angle); // undo rotation
+        }
+
+        function updateDateDisplay() {
+          var now = new Date();
+          // toLocaleDateString gives a readable date string
+          var options = {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          };
+          document.getElementById("date-display").textContent =
+            now.toLocaleDateString("en-US", options);
+        }
+      })();
+
+      /* ==============================================
+           WEATHER - Open-Meteo API (no key required)
+           ==============================================
+           API docs: https://open-meteo.com/
+
+           How it works:
+           1. Build a URL with latitude, longitude, and desired
+              parameters (temperature, wind speed, etc.)
+           2. fetch() returns a JSON response with a "current"
+              object containing the requested fields.
+           3. Parse and display the values.
+
+           The URL below is from the professor's notes:
+        */
+
+      (function initWeather() {
+        var API_URL =
+          "https://api.open-meteo.com/v1/forecast" +
+          "?latitude=39.7392" +
+          "&longitude=-104.9847" +
+          "&current=temperature_2m,wind_speed_10m,wind_direction_10m" +
+          "&timezone=America%2FDenver" +
+          "&temperature_unit=fahrenheit" +
+          "&wind_speed_unit=mph" +
+          "&precipitation_unit=inch";
+
+        // Fetch immediately, then refresh every 10 minutes
+        fetchWeather();
+        setInterval(fetchWeather, 10 * 60 * 1000);
+
+        function fetchWeather() {
+          fetch(API_URL)
+            .then(function (response) {
+              if (!response.ok) {
+                throw new Error("HTTP " + response.status);
+              }
+              return response.json();
+            })
+            .then(function (data) {
+              displayWeather(data);
+            })
+            .catch(function (err) {
+              document.getElementById("weather-error").textContent =
+                "Could not load weather: " + err.message;
+            });
+        }
+
+        function displayWeather(data) {
+          /*
+                    The API response structure (relevant part):
+                    {
+                        "current": {
+                            "temperature_2m": 72.5,
+                            "wind_speed_10m": 8.3,
+                            "wind_direction_10m": 225
+                        },
+                        "current_units": {
+                            "temperature_2m": "°F",
+                            "wind_speed_10m": "mp/h",
+                            "wind_direction_10m": "°"
+                        }
+                    }
+                */
+          var current = data.current;
+          var units = data.current_units;
+
+          // Convert wind direction degrees to compass label
+          var windDir = degreesToCompass(current.wind_direction_10m);
+
+          var html =
+            "" +
+            '<div class="weather-row">' +
+            '  <span class="weather-label">Temperature</span>' +
+            '  <span class="weather-value">' +
+            current.temperature_2m +
+            units.temperature_2m +
+            "  </span>" +
+            "</div>" +
+            '<div class="weather-row">' +
+            '  <span class="weather-label">Wind Speed</span>' +
+            '  <span class="weather-value">' +
+            current.wind_speed_10m +
+            " " +
+            units.wind_speed_10m +
+            "  </span>" +
+            "</div>" +
+            '<div class="weather-row">' +
+            '  <span class="weather-label">Wind Direction</span>' +
+            '  <span class="weather-value">' +
+            windDir +
+            " (" +
+            current.wind_direction_10m +
+            "°)" +
+            "  </span>" +
+            "</div>";
+
+          document.getElementById("weather-data").innerHTML = html;
+          document.getElementById("weather-error").textContent = "";
+        }
+
+        function degreesToCompass(deg) {
+          // Split 360° into 16 compass directions
+          var directions = [
+            "N",
+            "NNE",
+            "NE",
+            "ENE",
+            "E",
+            "ESE",
+            "SE",
+            "SSE",
+            "S",
+            "SSW",
+            "SW",
+            "WSW",
+            "W",
+            "WNW",
+            "NW",
+            "NNW",
+          ];
+          var index = Math.round(deg / 22.5) % 16;
+          return directions[index];
+        }
+      })();
+    </script>
+  </body>
+</html>

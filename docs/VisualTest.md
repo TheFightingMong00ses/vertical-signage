@@ -21,15 +21,19 @@ Since this is a plain HTML/CSS/JS project — not a browser extension — you do
 If you have Python installed (Raspberry Pi OS includes it by default):
 
 1. Open a terminal and navigate to your project root:
+
 ```bash
    cd path/to/your/project
 ```
+
 2. Start the server:
+
 ```bash
    python -m http.server 8080
 ```
+
 3. Open your browser and go to: http://localhost:8080/src/index.html
-> This is especially useful on the Raspberry Pi itself for final testing before connecting to the projector.
+   > This is especially useful on the Raspberry Pi itself for final testing before connecting to the projector.
 
 ---
 
