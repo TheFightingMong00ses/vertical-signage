@@ -1,4 +1,4 @@
-import { formatWeatherData } from "../src/weather.js";
+import { formatWeatherData } from "../src/weather.mjs";
 
 describe("formatWeatherData", () => {
   (test("extracts current weather values from API data", () => {
