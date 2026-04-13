@@ -18,22 +18,10 @@
   },
   "items": [
     {
-      "section": "Initial content",
+      "section": "Main content",
       "title": "Vertical Signage System",
       "body": "Development Team: The Fighting Moongooses.",
       "tags": ["student project", "demo", "vertical"]
-    },
-    {
-      "section": "Status",
-      "title": "Configuration Driven Content",
-      "body": "All of the cards on this screen are driven by the config/config.json file. Try editing that file and refreshing the page.",
-      "tags": ["config.json", "dynamic content"]
-    },
-    {
-      "section": "Next Steps",
-      "title": "Planned Features",
-      "body": "Rotation between items, API-based data, and richer layouts can be added step-by-step as the project evolves.",
-      "tags": ["rotation", "API", "future work"]
     }
   ]
 }
