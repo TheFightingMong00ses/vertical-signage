@@ -6,6 +6,7 @@
     "test": "jest --passWithNoTests",
     "lint": "eslint .",
     "lint:html": "htmlhint \"src/**/*.html\"",
+    "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate:config": "ajv validate -s config/config.schema.json -d config/config.json"
   },
