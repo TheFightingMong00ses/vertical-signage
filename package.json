@@ -1,11 +1,13 @@
 {
   "name": "vertical-signage",
   "version": "1.0.0",
+  "typre": "module",
   "private": true,
   "scripts": {
-    "test": "jest --passWithNoTests",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --passWithNoTests",
     "lint": "eslint .",
     "lint:html": "htmlhint \"src/**/*.html\"",
+    "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate:config": "ajv validate -s config/config.schema.json -d config/config.json"
   },
