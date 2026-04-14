@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('config/config.json'))""
+        run: node -e "JSON.parse(require('fs').readFileSync('config/config.json'))"
 
   # ============================================================
   # JOB 1: Code Quality Checks
