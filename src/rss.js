@@ -1,7 +1,24 @@
 // rss.js — Fetches Tom's Hardware RSS feed and rotates stories as a card
 
 (function () {
-  var RSS_URL = "https://www.tomshardware.com/feeds/all";
+  var FEEDS = [
+    // Tom's Hardware main feed (includes all categories) - We can comment it out later, but I wanted to keep it for now. Call me sentimeental :)
+    { url: "https://www.tomshardware.com/feeds/all",                                              label: "Tom's Hardware — All Categories" },
+    // Begin ACM feeds
+    { url: "https://cacm.acm.org/category/architecture-and-hardware/feed/",                       label: "ACM — Architecture and Hardware" },
+    { url: "https://cacm.acm.org/category/artificial-intelligence-and-machine-learning/feed/",    label: "ACM — Artificial Intelligence" },
+    { url: "https://cacm.acm.org/category/computing-applications/feed/",                          label: "ACM — Computing Applications" },
+    { url: "https://cacm.acm.org/category/computing-profession/feed/",                            label: "ACM — Computing Profession" },
+    { url: "https://cacm.acm.org/category/data-science/feed/",                                    label: "ACM — Data Science" },
+    { url: "https://cacm.acm.org/category/education/feed/",                                       label: "ACM — Education" },
+    { url: "https://cacm.acm.org/category/hci/feed/",                                             label: "ACM — Human-Computer Interaction" },
+    { url: "https://cacm.acm.org/category/security-and-privacy/feed/",                            label: "ACM — Security and Privacy" },
+    { url: "https://cacm.acm.org/category/society/feed/",                                         label: "ACM — Society" },
+    { url: "https://cacm.acm.org/category/software-engineering-and-programming-languages/feed/",  label: "ACM — Software Engineering" },
+    { url: "https://cacm.acm.org/category/systems-and-networking/feed/",                          label: "ACM — Systems and Networking" },
+    { url: "https://cacm.acm.org/category/theory/feed/",                                          label: "ACM — Theory of Computation" },
+  ];
+  var currentFeedIndex = 0;
   var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(RSS_URL);
   var ROTATE_INTERVAL_MS = 8000; // rotate story every 8 seconds
   var REFRESH_INTERVAL_MS = 10 * 60 * 1000; // re-fetch feed every 10 minutes
@@ -158,12 +175,23 @@
     showArticle(currentIndex);
 
     rotateTimer = setInterval(function () {
-      currentIndex = (currentIndex + 1) % articles.length;
-      showArticle(currentIndex);
+      currentIndex++;
+
+      if (currentIndex >= articles.length) {
+        //done with this feed, move to the next one
+        currentIndex = 0;
+        currentFeedIndex = (currentFeedIndex + 1) % FEEDS.length;
+        fetchFeed();
+      } else {
+        showArticle(currentIndex);
+      }
     }, ROTATE_INTERVAL_MS);
   }
 
   function fetchFeed() {
+    var feed = FEEDS[currentFeedIndex];
+    var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(feed.url);
+
     fetch(PROXY_URL)
       .then(function (res) {
         if (!res.ok) throw new Error("Network error");
@@ -175,6 +203,10 @@
 
         articles = parsed;
         currentIndex = 0;
+
+        //Update the card label to reflect the currect feed
+        var label = document.querySelector(".vs-rss-label");
+        if (label) label.innerHTML = '<span class="vs-rss-dot"></span> ' + feed.label;
 
         createRSSCard();
         startRotation();
@@ -189,5 +221,6 @@
 
   // Initial fetch, then refresh every 10 minutes
   fetchFeed();
-  setInterval(fetchFeed, REFRESH_INTERVAL_MS);
+  // Since Steve wanted the feed to move all the way through, the 10 minute refresh interval is no longer necessary. We can re-enable it later if we want to make sure the feed is always up to date, but for now let's just let it run through all the stories without interruption.
+  //setInterval(fetchFeed, REFRESH_INTERVAL_MS);
 })();
