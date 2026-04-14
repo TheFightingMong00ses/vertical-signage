@@ -7,6 +7,7 @@ on:
     branches: [main]
 
 jobs:
+
   # ============================================================
   # JOB 1: Validate Configuration Files
   # ============================================================
@@ -17,7 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('config/config.json'))""
+        run:
+          node -e "JSON.parse(require('fs').readFileSync('config/config.json'))""
 
   # ============================================================
   # JOB 1: Code Quality Checks
@@ -101,7 +103,7 @@ jobs:
 
       - name: Run npm audit # Only fail on moderate or higher vulnerabilities
         run: npm audit --audit-level=moderate
-        continue-on-error: true
+        continue-on-error: true 
 
       - name: Check for outdated dependencies
         run: npm outdated
