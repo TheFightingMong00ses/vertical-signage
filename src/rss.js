@@ -8,15 +8,15 @@
     { url: "https://cacm.acm.org/category/architecture-and-hardware/feed/",                       label: "ACM — Architecture and Hardware" },
     { url: "https://cacm.acm.org/category/artificial-intelligence-and-machine-learning/feed/",    label: "ACM — Artificial Intelligence" },
     { url: "https://cacm.acm.org/category/computing-applications/feed/",                          label: "ACM — Computing Applications" },
-    //{ url: "https://cacm.acm.org/category/computing-profession/feed/",                            label: "ACM — Computing Profession" },
-    //{ url: "https://cacm.acm.org/category/data-science/feed/",                                    label: "ACM — Data Science" },
-    //{ url: "https://cacm.acm.org/category/education/feed/",                                       label: "ACM — Education" },
-    //{ url: "https://cacm.acm.org/category/hci/feed/",                                             label: "ACM — Human-Computer Interaction" },
-    //{ url: "https://cacm.acm.org/category/security-and-privacy/feed/",                            label: "ACM — Security and Privacy" },
-    //{ url: "https://cacm.acm.org/category/society/feed/",                                         label: "ACM — Society" },
-    //{ url: "https://cacm.acm.org/category/software-engineering-and-programming-languages/feed/",  label: "ACM — Software Engineering" },
-    //{ url: "https://cacm.acm.org/category/systems-and-networking/feed/",                          label: "ACM — Systems and Networking" },
-    //{ url: "https://cacm.acm.org/category/theory/feed/",                                          label: "ACM — Theory of Computation" },
+    { url: "https://cacm.acm.org/category/computing-profession/feed/",                            label: "ACM — Computing Profession" },
+    { url: "https://cacm.acm.org/category/data-science/feed/",                                    label: "ACM — Data Science" },
+    { url: "https://cacm.acm.org/category/education/feed/",                                       label: "ACM — Education" },
+    { url: "https://cacm.acm.org/category/hci/feed/",                                             label: "ACM — Human-Computer Interaction" },
+    { url: "https://cacm.acm.org/category/security-and-privacy/feed/",                            label: "ACM — Security and Privacy" },
+    { url: "https://cacm.acm.org/category/society/feed/",                                         label: "ACM — Society" },
+    { url: "https://cacm.acm.org/category/software-engineering-and-programming-languages/feed/",  label: "ACM — Software Engineering" },
+    { url: "https://cacm.acm.org/category/systems-and-networking/feed/",                          label: "ACM — Systems and Networking" },
+    { url: "https://cacm.acm.org/category/theory/feed/",                                          label: "ACM — Theory of Computation" },
   ];
   var currentFeedIndex = 0;
   //var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(RSS_URL);
@@ -119,10 +119,15 @@
     counter.id = "vs-rss-counter";
     counter.textContent = "";
 
+    var content = document.createElement("div");
+    content.className = "vs-rss-content";
+    content.id = "vs-rss-content";
+    content.appendChild(heading);
+    content.appendChild(body);
+    content.appendChild(meta);
+
     card.appendChild(label);
-    card.appendChild(heading);
-    card.appendChild(body);
-    card.appendChild(meta);
+    card.appendChild(content);
     card.appendChild(progress);
     card.appendChild(counter);
 
@@ -134,6 +139,7 @@
     if (!articles.length) return;
 
     var article = articles[index];
+    var content = document.getElementById("vs-rss-content");
     var heading = document.getElementById("vs-rss-heading");
     var body = document.getElementById("vs-rss-body");
     var meta = document.getElementById("vs-rss-meta");
@@ -142,21 +148,48 @@
 
     if (!heading || !body) return;
 
-    // Fade out
-    if (card) card.style.opacity = "0.4";
+    // 1. Fade out content
+    if (content) content.style.opacity = "0";
 
+    // 2. After fade completes, swap content, measure new height, animate card
     setTimeout(function () {
+      // Swap content while invisible
       heading.textContent = article.title;
       body.textContent = article.description;
       meta.textContent = article.date;
       counter.textContent = (index + 1) + " / " + articles.length;
 
-      // Fade in
-      if (card) card.style.opacity = "1";
+      if (card) {
+        // Lock to current rendered height
+        var currentHeight = card.offsetHeight;
+        card.style.height = currentHeight + "px";
 
-      // Restart progress bar animation
-      startProgressBar();
-    }, 300);
+        // Let browser compute the new natural height with content already swapped
+        requestAnimationFrame(function () {
+          // Temporarily release to measure natural height
+          card.style.height = "auto";
+          var targetHeight = card.scrollHeight + "px";
+
+          // Re-lock to current so the transition has a defined start point
+          card.style.height = currentHeight + "px";
+
+          // Kick off the smooth height animation on the next paint
+          requestAnimationFrame(function () {
+            card.style.height = targetHeight;
+
+            // 3. Fade content back in slightly after height animation begins
+            setTimeout(function () {
+              if (content) content.style.opacity = "1";
+              startProgressBar();
+            }, 120);
+          });
+        });
+      } else {
+        // No card — just fade back in immediately
+        if (content) content.style.opacity = "1";
+        startProgressBar();
+      }
+    }, 550); // match the CSS opacity transition duration (0.55s)
   }
 
   function startProgressBar() {
