@@ -19,7 +19,7 @@
     { url: "https://cacm.acm.org/category/theory/feed/",                                          label: "ACM — Theory of Computation" },
   ];
   var currentFeedIndex = 0;
-  var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(RSS_URL);
+  //var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(RSS_URL);
   var ROTATE_INTERVAL_MS = 8000; // rotate story every 8 seconds
   var REFRESH_INTERVAL_MS = 10 * 60 * 1000; // re-fetch feed every 10 minutes
 
