@@ -1,5 +1,4 @@
 // rss.js — Fetches Tom's Hardware RSS feed and rotates stories as a card
-// adding a comment to test main's linting setup
 (function () {
   var FEEDS = [
     // Tom's Hardware main feed (includes all categories) - We can comment it out later, but I wanted to keep it for now. Call me sentimeental :)
