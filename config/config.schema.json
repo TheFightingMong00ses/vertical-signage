@@ -1,124 +1,124 @@
 {
-    "type": "object",
-    "required": ["items", "widgets", "displaySettings"],
-    "properties": { 
-        "widgets": {
-            "type":"array",
-            "minItems":1,
-            "items":{ 
-                "oneOf": [
-                    {
-                    "type": "object",
-                    "required": ["type", "timezone"],
-                    "properties": { 
-                        "type": { 
-                            "const": "clock"
-                        },
-                        "size": {
-                            "type": "number",
-                            "minimum": 100
-                        },
-                        "theme": {
-                            "type": "string",
-                            "enum": ["light", "dark"]
-                        },
-                        "timezone": {
-                            "type": "string"
-                        }
-                    },
-                    "additionalProperties": false
-                    },
-                    {
-                        "type":"object",
-                        "required": ["type", "provider", "lat", "lon"],
-                        "properties": {
-                            "type": {
-                            "const": "weather"
-                            },
-                            "provider": {
-                                "type": "string",
-                                "enum": ["open-meteo"]
-                            },
-                            "lat": {
-                                "type": "number"
-                            },
-                            "lon": {
-                                "type": "number"
-                            }
-                    },
-                    "additionalProperties": false
-                    },
-                    {
-                        "type":"object",
-                        "required": ["type", "feeds"],
-                        "properties": {
-                            "type": {
-                                "const": "rss"
-                            },
-                        "feeds": {
-                            "type" : "array",
-                            "minItems": 1,
-                            "items": {
-                                "type": "string",
-                                "format": "url"
-                            }
-                        }
-                    },
-                    "additionalProperties": false
-                    },
-                    {   
-                        "type" : "object",
-                        "required": ["type"],  
-                        "properties": {
-                            "type": {
-                            "const": "calendar"
-                            }
-                    },
-                    "additionalProperties": false
-            }
-        ]
-    }    
-},
-    "displaySettings": {
-        "type": "object",
-        "required": ["refreshMinutes", "fontScale"],
-        "properties": {
-            "refreshMinutes": {
-                "type": "number",
-                "minimum": 1
-            },
-            "fontScale": {
-                "type": "number",
-                "minimum": 0.1
-            }
-        },
-        "additionalProperties": false
-        },
-    "items": {
-        "type": "array",
-        "items": {
+  "type": "object",
+  "required": ["items", "widgets", "displaySettings"],
+  "properties": {
+    "widgets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
             "type": "object",
-            "required": ["section", "title", "body", "tags"],
+            "required": ["type", "timezone"],
             "properties": {
-                "section": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "body": {
-                    "type": "string"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+              "type": {
+                "const": "clock"
+              },
+              "size": {
+                "type": "number",
+                "minimum": 100
+              },
+              "theme": {
+                "type": "string",
+                "enum": ["light", "dark"]
+              },
+              "timezone": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "provider", "lat", "lon"],
+            "properties": {
+              "type": {
+                "const": "weather"
+              },
+              "provider": {
+                "type": "string",
+                "enum": ["open-meteo"]
+              },
+              "lat": {
+                "type": "number"
+              },
+              "lon": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "feeds"],
+            "properties": {
+              "type": {
+                "const": "rss"
+              },
+              "feeds": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "format": "url"
                 }
-            }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "const": "calendar"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "displaySettings": {
+      "type": "object",
+      "required": ["refreshMinutes", "fontScale"],
+      "properties": {
+        "refreshMinutes": {
+          "type": "number",
+          "minimum": 1
         },
-         "additionalProperties": false
+        "fontScale": {
+          "type": "number",
+          "minimum": 0.1
+        }
+      },
+      "additionalProperties": false
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["section", "title", "body", "tags"],
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
-}, 
-"additionalProperties": false
+  },
+  "additionalProperties": false
 }

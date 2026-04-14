@@ -15,20 +15,15 @@
     },
     {
       "type": "rss",
-      "feeds": [
-        "",
-        "",
-        "",
-        ""
-      ]
+      "feeds": ["", "", "", ""]
     },
     {
       "type": "calendar"
     }
   ],
   "displaySettings": {
-     "refreshMinutes": 10,
-     "fontScale": 1
+    "refreshMinutes": 10,
+    "fontScale": 1
   },
   "items": [
     {
