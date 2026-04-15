@@ -53,7 +53,11 @@
   }
 
   function renderItems(items) {
-    signageColumn.innerHTML = "";
+    // Remove only the config-driven cards, not cards added by other scripts
+    var existing = signageColumn.querySelectorAll(".vs-card:not(.vs-rss-card)");
+    existing.forEach(function (el) {
+      el.remove();
+    });
 
     if (!items || items.length === 0) {
       var empty = document.createElement("p");
