@@ -122,11 +122,15 @@
   }
 
   function createRSSCard() {
-    var existing = document.getElementById("vs-rss-card");
-    if (existing) return existing;
-
     var signageColumn = document.getElementById("signage-column");
     if (!signageColumn) return null;
+
+    var existing = document.getElementById("vs-rss-card");
+    if (existing) {
+      // Always re-append to guarantee it stays at the bottom of the column
+      signageColumn.appendChild(existing);
+      return existing;
+    }
 
     var card = document.createElement("article");
     card.className = "vs-card vs-rss-card";
@@ -212,6 +216,31 @@
     var counter = document.getElementById(slotId(slot.id, "counter"));
 
     if (!heading || !body) return;
+
+    // On the very first article, skip the fade+height animation entirely.
+    // The slot has no real height yet (just rendered "Loading…"), so there's
+    // nothing valid to animate from — attempting it causes the startup jank.
+    // Let it paint once at its natural height, then all subsequent transitions
+    // will be smooth.
+    if (!slot.hasShownFirst) {
+      slot.hasShownFirst = true;
+      heading.textContent = article.title;
+      body.textContent    = article.description;
+      meta.textContent    = article.date;
+      counter.textContent = slot.articleIndex + 1 + " / " + slot.articles.length;
+      if (slotEl) {
+        // Disable the height transition just for this first paint, then
+        // re-enable it after the browser has had a frame to measure from.
+        slotEl.style.transition = "none";
+        slotEl.style.height = "auto";
+        requestAnimationFrame(function () {
+          slotEl.style.transition = "";
+        });
+      }
+      if (content) content.style.opacity = "1";
+      startProgressBar(slot.id);
+      return;
+    }
 
     // 1. Fade out content
     if (content) content.style.opacity = "0";
@@ -328,9 +357,12 @@
   }
 
   // ── Bootstrap ──────────────────────────────────────────────────────────────
-  createRSSCard();
-
-  slots.forEach(function (slot) {
-    fetchFeedForSlot(slot);
-  });
+  // Wait for app.js to finish rendering config cards before appending the RSS
+  // card, so it always lands at the bottom of the column.
+  document.addEventListener("vs:config-rendered", function () {
+    createRSSCard();
+    slots.forEach(function (slot) {
+      fetchFeedForSlot(slot);
+    });
+  }, { once: true });
 })();
