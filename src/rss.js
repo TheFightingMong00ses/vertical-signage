@@ -208,11 +208,11 @@
     if (!slot.articles.length) return;
 
     var article = slot.articles[slot.articleIndex];
-    var slotEl  = document.getElementById("vs-rss-slot-" + slot.id);
+    var slotEl = document.getElementById("vs-rss-slot-" + slot.id);
     var content = document.getElementById(slotId(slot.id, "content"));
     var heading = document.getElementById(slotId(slot.id, "heading"));
-    var body    = document.getElementById(slotId(slot.id, "body"));
-    var meta    = document.getElementById(slotId(slot.id, "meta"));
+    var body = document.getElementById(slotId(slot.id, "body"));
+    var meta = document.getElementById(slotId(slot.id, "meta"));
     var counter = document.getElementById(slotId(slot.id, "counter"));
 
     if (!heading || !body) return;
@@ -225,9 +225,10 @@
     if (!slot.hasShownFirst) {
       slot.hasShownFirst = true;
       heading.textContent = article.title;
-      body.textContent    = article.description;
-      meta.textContent    = article.date;
-      counter.textContent = slot.articleIndex + 1 + " / " + slot.articles.length;
+      body.textContent = article.description;
+      meta.textContent = article.date;
+      counter.textContent =
+        slot.articleIndex + 1 + " / " + slot.articles.length;
       if (slotEl) {
         // Disable the height transition just for this first paint, then
         // re-enable it after the browser has had a frame to measure from.
@@ -248,9 +249,10 @@
     // 2. After fade completes, swap content, measure new height, animate slot
     setTimeout(function () {
       heading.textContent = article.title;
-      body.textContent    = article.description;
-      meta.textContent    = article.date;
-      counter.textContent = slot.articleIndex + 1 + " / " + slot.articles.length;
+      body.textContent = article.description;
+      meta.textContent = article.date;
+      counter.textContent =
+        slot.articleIndex + 1 + " / " + slot.articles.length;
 
       if (slotEl) {
         // Lock to current rendered height
@@ -348,21 +350,28 @@
       .catch(function (err) {
         console.error("RSS fetch failed for slot " + slot.id + ":", err);
         var heading = document.getElementById(slotId(slot.id, "heading"));
-        if (heading) heading.textContent = "Could not load feed. Trying next\u2026";
+        if (heading)
+          heading.textContent = "Could not load feed. Trying next\u2026";
 
         // Advance to the next feed and retry after a short delay
         slot.feedIndex = (slot.feedIndex + 1) % FEEDS.length;
-        setTimeout(function () { fetchFeedForSlot(slot); }, 3000);
+        setTimeout(function () {
+          fetchFeedForSlot(slot);
+        }, 3000);
       });
   }
 
   // ── Bootstrap ──────────────────────────────────────────────────────────────
   // Wait for app.js to finish rendering config cards before appending the RSS
   // card, so it always lands at the bottom of the column.
-  document.addEventListener("vs:config-rendered", function () {
-    createRSSCard();
-    slots.forEach(function (slot) {
-      fetchFeedForSlot(slot);
-    });
-  }, { once: true });
+  document.addEventListener(
+    "vs:config-rendered",
+    function () {
+      createRSSCard();
+      slots.forEach(function (slot) {
+        fetchFeedForSlot(slot);
+      });
+    },
+    { once: true },
+  );
 })();
