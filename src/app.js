@@ -71,6 +71,10 @@
       var card = createCard(item);
       signageColumn.appendChild(card);
     });
+
+    // Signal that config cards have been rendered so other scripts can
+    // position themselves after them (e.g. the RSS card stays at the bottom).
+    document.dispatchEvent(new CustomEvent("vs:config-rendered"));
   }
 
   function applyDisplaySettings(settings) {

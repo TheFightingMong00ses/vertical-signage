@@ -1,5 +1,4 @@
-// rss.js — Fetches Tom's Hardware RSS feed and rotates stories as a card
-// comment for commentings sake
+// rss.js — Displays 4 simultaneous ACM RSS feeds stacked in the RSS card
 (function () {
   var FEEDS = [
     // Tom's Hardware main feed (includes all categories) - We can comment it out later, but I wanted to keep it for now. Call me sentimeental :)
@@ -54,15 +53,25 @@
       label: "ACM — Theory of Computation",
     },
   ];
-  var currentFeedIndex = 0;
-  //var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(RSS_URL);
+
+  var NUM_SLOTS = 4;
   var ROTATE_INTERVAL_MS = 8000; // rotate story every 8 seconds
-  var REFRESH_INTERVAL_MS = 10 * 60 * 1000; // re-fetch feed every 10 minutes
+  // Since Steve wanted the feed to move all the way through, the 10 minute refresh interval is no longer necessary.
+  // var REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
-  var articles = [];
-  var currentIndex = 0;
-  var rotateTimer = null;
+  // Each slot tracks its own feed index, article list, article index, and timer
+  var slots = [];
+  for (var i = 0; i < NUM_SLOTS; i++) {
+    slots.push({
+      id: i,
+      feedIndex: i % FEEDS.length, // spread starting points across the feed list
+      articles: [],
+      articleIndex: 0,
+      rotateTimer: null,
+    });
+  }
 
+  // ── RSS parsing helpers ────────────────────────────────────────────────────
   function parseRSS(xmlString) {
     var parser = new DOMParser();
     var doc = parser.parseFromString(xmlString, "text/xml");
@@ -107,130 +116,177 @@
     }
   }
 
-  function getRSSCard() {
-    return document.getElementById("vs-rss-card");
+  // ── DOM helpers ────────────────────────────────────────────────────────────
+  function slotId(slotIdx, suffix) {
+    return "vs-rss-slot-" + slotIdx + "-" + suffix;
   }
 
   function createRSSCard() {
-    var existing = getRSSCard();
-    if (existing) return existing;
-
     var signageColumn = document.getElementById("signage-column");
     if (!signageColumn) return null;
+
+    var existing = document.getElementById("vs-rss-card");
+    if (existing) {
+      // Always re-append to guarantee it stays at the bottom of the column
+      signageColumn.appendChild(existing);
+      return existing;
+    }
 
     var card = document.createElement("article");
     card.className = "vs-card vs-rss-card";
     card.id = "vs-rss-card";
 
-    var label = document.createElement("div");
-    label.className = "vs-card-title vs-rss-label";
-    label.innerHTML =
-      '<span class="vs-rss-dot"></span> Tom\'s Hardware — Live Feed';
-
-    var heading = document.createElement("h2");
-    heading.className = "vs-card-heading";
-    heading.id = "vs-rss-heading";
-    heading.textContent = "Loading…";
-
-    var body = document.createElement("p");
-    body.className = "vs-card-body";
-    body.id = "vs-rss-body";
-    body.textContent = "";
-
-    var meta = document.createElement("div");
-    meta.className = "vs-rss-meta";
-    meta.id = "vs-rss-meta";
-    meta.textContent = "";
-
-    var progress = document.createElement("div");
-    progress.className = "vs-rss-progress";
-    progress.id = "vs-rss-progress";
-
-    var bar = document.createElement("div");
-    bar.className = "vs-rss-bar";
-    bar.id = "vs-rss-bar";
-    progress.appendChild(bar);
-
-    var counter = document.createElement("div");
-    counter.className = "vs-rss-counter";
-    counter.id = "vs-rss-counter";
-    counter.textContent = "";
-
-    var content = document.createElement("div");
-    content.className = "vs-rss-content";
-    content.id = "vs-rss-content";
-    content.appendChild(heading);
-    content.appendChild(body);
-    content.appendChild(meta);
-
-    card.appendChild(label);
-    card.appendChild(content);
-    card.appendChild(progress);
-    card.appendChild(counter);
+    for (var i = 0; i < NUM_SLOTS; i++) {
+      card.appendChild(createSlotDOM(i));
+      if (i < NUM_SLOTS - 1) {
+        var divider = document.createElement("div");
+        divider.className = "vs-rss-slot-divider";
+        card.appendChild(divider);
+      }
+    }
 
     signageColumn.appendChild(card);
     return card;
   }
 
-  function showArticle(index) {
-    if (!articles.length) return;
+  function createSlotDOM(slotIdx) {
+    var wrapper = document.createElement("div");
+    wrapper.className = "vs-rss-slot";
+    wrapper.id = "vs-rss-slot-" + slotIdx;
 
-    var article = articles[index];
-    var content = document.getElementById("vs-rss-content");
-    var heading = document.getElementById("vs-rss-heading");
-    var body = document.getElementById("vs-rss-body");
-    var meta = document.getElementById("vs-rss-meta");
-    var counter = document.getElementById("vs-rss-counter");
-    var card = getRSSCard();
+    var label = document.createElement("div");
+    label.className = "vs-card-title vs-rss-label";
+    label.id = slotId(slotIdx, "label");
+    label.innerHTML = '<span class="vs-rss-dot"></span> Loading\u2026';
+
+    var heading = document.createElement("h2");
+    heading.className = "vs-card-heading";
+    heading.id = slotId(slotIdx, "heading");
+    heading.textContent = "Loading\u2026";
+
+    var body = document.createElement("p");
+    body.className = "vs-card-body";
+    body.id = slotId(slotIdx, "body");
+    body.textContent = "";
+
+    var meta = document.createElement("div");
+    meta.className = "vs-rss-meta";
+    meta.id = slotId(slotIdx, "meta");
+    meta.textContent = "";
+
+    var progress = document.createElement("div");
+    progress.className = "vs-rss-progress vs-rss-progress-slot";
+    progress.id = slotId(slotIdx, "progress");
+
+    var bar = document.createElement("div");
+    bar.className = "vs-rss-bar";
+    bar.id = slotId(slotIdx, "bar");
+    progress.appendChild(bar);
+
+    var counter = document.createElement("div");
+    counter.className = "vs-rss-counter vs-rss-counter-slot";
+    counter.id = slotId(slotIdx, "counter");
+    counter.textContent = "";
+
+    var content = document.createElement("div");
+    content.className = "vs-rss-content";
+    content.id = slotId(slotIdx, "content");
+    content.appendChild(heading);
+    content.appendChild(body);
+    content.appendChild(meta);
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(content);
+    wrapper.appendChild(progress);
+    wrapper.appendChild(counter);
+
+    return wrapper;
+  }
+
+  // -- Per-slot article display -----------------------------------------------
+  function showArticle(slot) {
+    if (!slot.articles.length) return;
+
+    var article = slot.articles[slot.articleIndex];
+    var slotEl = document.getElementById("vs-rss-slot-" + slot.id);
+    var content = document.getElementById(slotId(slot.id, "content"));
+    var heading = document.getElementById(slotId(slot.id, "heading"));
+    var body = document.getElementById(slotId(slot.id, "body"));
+    var meta = document.getElementById(slotId(slot.id, "meta"));
+    var counter = document.getElementById(slotId(slot.id, "counter"));
 
     if (!heading || !body) return;
+
+    // On the very first article, skip the fade+height animation entirely.
+    // The slot has no real height yet (just rendered "Loading…"), so there's
+    // nothing valid to animate from — attempting it causes the startup jank.
+    // Let it paint once at its natural height, then all subsequent transitions
+    // will be smooth.
+    if (!slot.hasShownFirst) {
+      slot.hasShownFirst = true;
+      heading.textContent = article.title;
+      body.textContent = article.description;
+      meta.textContent = article.date;
+      counter.textContent =
+        slot.articleIndex + 1 + " / " + slot.articles.length;
+      if (slotEl) {
+        // Disable the height transition just for this first paint, then
+        // re-enable it after the browser has had a frame to measure from.
+        slotEl.style.transition = "none";
+        slotEl.style.height = "auto";
+        requestAnimationFrame(function () {
+          slotEl.style.transition = "";
+        });
+      }
+      if (content) content.style.opacity = "1";
+      startProgressBar(slot.id);
+      return;
+    }
 
     // 1. Fade out content
     if (content) content.style.opacity = "0";
 
-    // 2. After fade completes, swap content, measure new height, animate card
+    // 2. After fade completes, swap content, measure new height, animate slot
     setTimeout(function () {
-      // Swap content while invisible
       heading.textContent = article.title;
       body.textContent = article.description;
       meta.textContent = article.date;
-      counter.textContent = index + 1 + " / " + articles.length;
+      counter.textContent =
+        slot.articleIndex + 1 + " / " + slot.articles.length;
 
-      if (card) {
+      if (slotEl) {
         // Lock to current rendered height
-        var currentHeight = card.offsetHeight;
-        card.style.height = currentHeight + "px";
+        var currentHeight = slotEl.offsetHeight;
+        slotEl.style.height = currentHeight + "px";
 
-        // Let browser compute the new natural height with content already swapped
         requestAnimationFrame(function () {
-          // Temporarily release to measure natural height
-          card.style.height = "auto";
-          var targetHeight = card.scrollHeight + "px";
+          // Temporarily release to measure natural height with new content
+          slotEl.style.height = "auto";
+          var targetHeight = slotEl.scrollHeight + "px";
 
-          // Re-lock to current so the transition has a defined start point
-          card.style.height = currentHeight + "px";
+          // Re-lock so the transition has a defined start point
+          slotEl.style.height = currentHeight + "px";
 
           // Kick off the smooth height animation on the next paint
           requestAnimationFrame(function () {
-            card.style.height = targetHeight;
+            slotEl.style.height = targetHeight;
 
             // 3. Fade content back in slightly after height animation begins
             setTimeout(function () {
               if (content) content.style.opacity = "1";
-              startProgressBar();
+              startProgressBar(slot.id);
             }, 120);
           });
         });
       } else {
-        // No card — just fade back in immediately
         if (content) content.style.opacity = "1";
-        startProgressBar();
+        startProgressBar(slot.id);
       }
-    }, 550); // match the CSS opacity transition duration (0.55s)
+    }, 550); // match CSS opacity transition duration (0.55s)
   }
 
-  function startProgressBar() {
-    var bar = document.getElementById("vs-rss-bar");
+  function startProgressBar(slotIdx) {
+    var bar = document.getElementById(slotId(slotIdx, "bar"));
     if (!bar) return;
     bar.style.transition = "none";
     bar.style.width = "0%";
@@ -240,39 +296,38 @@
     }, 30);
   }
 
-  function startRotation() {
-    if (rotateTimer) clearInterval(rotateTimer);
-    showArticle(currentIndex);
+  function startRotation(slot) {
+    if (slot.rotateTimer) clearInterval(slot.rotateTimer);
+    showArticle(slot);
 
-    rotateTimer = setInterval(function () {
-      currentIndex++;
+    slot.rotateTimer = setInterval(function () {
+      slot.articleIndex++;
 
-      if (currentIndex >= articles.length) {
-        //done with this feed, move to the next one
-        currentIndex = 0;
-        currentFeedIndex = (currentFeedIndex + 1) % FEEDS.length;
-        fetchFeed();
+      if (slot.articleIndex >= slot.articles.length) {
+        // Done with this feed — move to the next one
+        slot.articleIndex = 0;
+        slot.feedIndex = (slot.feedIndex + 1) % FEEDS.length;
+        fetchFeedForSlot(slot);
       } else {
-        showArticle(currentIndex);
+        showArticle(slot);
       }
     }, ROTATE_INTERVAL_MS);
   }
 
-  function fetchFeed() {
-    // Stop any existing rotation immediately
-    if (rotateTimer) {
-      clearInterval(rotateTimer);
-      rotateTimer = null;
+  // ── Per-slot fetch ─────────────────────────────────────────────────────────
+  function fetchFeedForSlot(slot) {
+    if (slot.rotateTimer) {
+      clearInterval(slot.rotateTimer);
+      slot.rotateTimer = null;
     }
 
-    var feed = FEEDS[currentFeedIndex];
+    var feed = FEEDS[slot.feedIndex];
     var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(feed.url);
 
-    //Upate the lable immediately when we start fetching
-    var lable = document.querySelector(".vs-rss-label");
-    if (lable)
-      lable.innerHTML =
-        '<span class="vs-rss-dot"></span> Loading ' + feed.label + "…";
+    var label = document.getElementById(slotId(slot.id, "label"));
+    if (label)
+      label.innerHTML =
+        '<span class="vs-rss-dot"></span> Loading ' + feed.label + "\u2026";
 
     fetch(PROXY_URL)
       .then(function (res) {
@@ -283,31 +338,40 @@
         var parsed = parseRSS(data);
         if (parsed.length === 0) throw new Error("No articles found");
 
-        articles = parsed;
-        currentIndex = 0;
+        slot.articles = parsed;
+        slot.articleIndex = 0;
 
-        //Update the card label to reflect the currect feed
-        var label = document.querySelector(".vs-rss-label");
-        if (label)
-          label.innerHTML = '<span class="vs-rss-dot"></span> ' + feed.label;
+        var lbl = document.getElementById(slotId(slot.id, "label"));
+        if (lbl)
+          lbl.innerHTML = '<span class="vs-rss-dot"></span> ' + feed.label;
 
-        createRSSCard();
-        startRotation();
+        startRotation(slot);
       })
       .catch(function (err) {
-        console.error("RSS fetch failed:", err);
-        var card = createRSSCard();
-        var heading = document.getElementById("vs-rss-heading");
-        if (heading) heading.textContent = "Could not load feed. Trying next…";
+        console.error("RSS fetch failed for slot " + slot.id + ":", err);
+        var heading = document.getElementById(slotId(slot.id, "heading"));
+        if (heading)
+          heading.textContent = "Could not load feed. Trying next\u2026";
 
-        //Advance to the next feed and try again after a short delay
-        currentFeedIndex = (currentFeedIndex + 1) % FEEDS.length;
-        setTimeout(fetchFeed, 3000);
+        // Advance to the next feed and retry after a short delay
+        slot.feedIndex = (slot.feedIndex + 1) % FEEDS.length;
+        setTimeout(function () {
+          fetchFeedForSlot(slot);
+        }, 3000);
       });
   }
 
-  // Initial fetch, then refresh every 10 minutes
-  fetchFeed();
-  // Since Steve wanted the feed to move all the way through, the 10 minute refresh interval is no longer necessary. We can re-enable it later if we want to make sure the feed is always up to date, but for now let's just let it run through all the stories without interruption.
-  //setInterval(fetchFeed, REFRESH_INTERVAL_MS);
+  // ── Bootstrap ──────────────────────────────────────────────────────────────
+  // Wait for app.js to finish rendering config cards before appending the RSS
+  // card, so it always lands at the bottom of the column.
+  document.addEventListener(
+    "vs:config-rendered",
+    function () {
+      createRSSCard();
+      slots.forEach(function (slot) {
+        fetchFeedForSlot(slot);
+      });
+    },
+    { once: true },
+  );
 })();
