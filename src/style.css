@@ -133,10 +133,8 @@ body {
 .vs-rss-card {
   border-color: #1e3a5f;
   background: linear-gradient(145deg, #0a1628, #020617);
-  transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
   position: relative;
-  padding-bottom: 2.1rem; /* reserve space for the absolutely-positioned bar + counter */
+  padding-bottom: 1rem;
 }
 
 .vs-rss-content {
@@ -206,4 +204,37 @@ body {
     padding-top: 1.25rem;
     padding-bottom: 1.75rem;
   }
+}
+
+/* ── Multi-slot RSS layout ─────────────────────────────────────────────── */
+.vs-rss-card {
+  /* Remove the fixed bottom padding — each slot manages its own spacing */
+  padding-bottom: 1rem;
+}
+
+.vs-rss-slot {
+  position: relative;
+  padding-bottom: 2.1rem; /* reserve space for progress bar + counter */
+  transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.vs-rss-slot-divider {
+  border: none;
+  border-top: 1px solid #1f2937;
+  margin: 0.75rem 0;
+}
+
+/* Make the progress bar and counter position relative to the slot, not the card */
+.vs-rss-progress-slot {
+  position: absolute;
+  bottom: 1.1rem;
+  left: 0;
+  right: 0;
+}
+
+.vs-rss-counter-slot {
+  position: absolute;
+  bottom: 0.2rem;
+  right: 0;
 }
