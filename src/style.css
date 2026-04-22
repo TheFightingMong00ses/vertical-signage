@@ -199,6 +199,9 @@ body {
   color: #4b5563;
 }
 
+/* @media(orientation: landscape) vs @media(orientation: portrait)*/
+
+
 @media (min-height: 900px) {
   .vs-main {
     padding-top: 1.25rem;
