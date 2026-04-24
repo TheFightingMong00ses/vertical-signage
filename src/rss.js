@@ -1,5 +1,5 @@
 // rss.js — Displays 4 simultaneous ACM RSS feeds stacked in the RSS card
-(function () {
+
   var FEEDS = [
     // Tom's Hardware main feed (includes all categories) - We can comment it out later, but I wanted to keep it for now. Call me sentimeental :)
     //{ url: "https://www.tomshardware.com/feeds/all",                                              label: "Tom's Hardware — All Categories" },
@@ -360,18 +360,11 @@
         }, 3000);
       });
   }
+  export function initRSS() {
+    createRSSCard();
+    slots.forEach(function (slot) {
+      fetchFeedForSlot(slot);         
+    });
+  }
 
-  // ── Bootstrap ──────────────────────────────────────────────────────────────
-  // Wait for app.js to finish rendering config cards before appending the RSS
-  // card, so it always lands at the bottom of the column.
-  document.addEventListener(
-    "vs:config-rendered",
-    function () {
-      createRSSCard();
-      slots.forEach(function (slot) {
-        fetchFeedForSlot(slot);
-      });
-    },
-    { once: true },
-  );
-})();
+

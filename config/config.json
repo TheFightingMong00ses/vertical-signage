@@ -3,8 +3,9 @@
     {
       "type": "weather",
       "provider": "open-meteo",
-      "lat": 39.7392,
-      "lon": -104.9903
+      "lat": 30.5852,
+      "lon": 36.2384
+      
     },
 
     {
@@ -29,13 +30,5 @@
   "displaySettings": {
      "refreshMinutes": 10,
      "fontScale": 1
-  },
-  "items": [
-    {
-      "section": "Main content",
-      "title": "Vertical Signage System",
-      "body": "Development Team: The Fighting Moongooses.",
-      "tags": ["student project", "demo", "vertical"]
-    }
-  ]
+  }
 }
