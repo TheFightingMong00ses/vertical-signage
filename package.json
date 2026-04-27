@@ -1,7 +1,7 @@
 {
   "name": "vertical-signage",
   "version": "1.0.0",
-  "typre": "module",
+  "type": "module",
   "private": true,
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --passWithNoTests",
