@@ -40,4 +40,3 @@ describe("buildWeatherAPIUrl", () => {
     expect(result).toContain("longitude=null");
   });
 });
-
