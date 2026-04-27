@@ -3,8 +3,8 @@
     {
       "type": "weather",
       "provider": "open-meteo",
-      "lat": 30.5852,
-      "lon": 36.2384
+      "lat": 39.74,
+      "lon": -104.984726
       
     },
 
