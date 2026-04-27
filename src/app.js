@@ -2,6 +2,7 @@
 // Reads configuration from config/config.json and renders "cards" vertically.
 import { initRSS } from "./rss.js";
 import { initWeather, refreshWeather } from "./weather.js";
+import { initClock } from "./clock.js";
 var signageColumn = document.getElementById("signage-column");
 var statusEl = document.getElementById("vs-status");
 
@@ -48,9 +49,11 @@ function loadConfig() {
       applyDisplaySettings(config.displaySettings);
       setStatus("Config loaded");
       const weatherConfig = config.widgets.find((w) => w.type === "weather");
+      const clockConfig = config.widgets.find((w) => w.type === "clock");
       const rssConfig = config.widgets.find((w) => w.type === "rss");
 
       if (weatherConfig) initWeather(weatherConfig.lat, weatherConfig.lon);
+      if (clockConfig) initClock(clockConfig);
       if (rssConfig) initRSS();
     })
     .catch(function (error) {
