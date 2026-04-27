@@ -3,7 +3,7 @@ export function buildWeatherAPIUrl(lat, lon) {
   return `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,apparent_temperature,weathercode&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
 }
 //Handles the API respnse calls and returns the used api as an object
-export async function fetchUrl(url){
+export async function fetchUrl(url) {
   const response = await fetch(url);
   const apiData = await response.json();
   return formatWeatherData(apiData);
