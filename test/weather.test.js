@@ -25,12 +25,13 @@ describe("formatWeatherData", () => {
 });
 
 describe("buildWeatherAPIUrl", () => {
+  const expectedUrl =
+    "https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.006&current=temperature_2m,precipitation,wind_speed_10m&timezone=America%2FDenver&forecast_days=3&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch";
+
   test("constructs the correct API URL with given coordinates", () => {
     const apiData = {
-      current: {
-        lat: 40.7128,
-        lon: -74.006,
-      },
+      lat: 40.7128,
+      lon: -74.006,
     };
     const result = buildWeatherAPIUrl(apiData.lat, apiData.lon);
     expect(result).toBe(expectedUrl);
@@ -40,7 +41,4 @@ describe("buildWeatherAPIUrl", () => {
     const result = buildWeatherAPIUrl(null, null);
     expect(result).toBe(expectedUrl);
   });
-
-  const expectedUrl =
-    "https://api.open-meteo.com/v1/forecast?latitude= 40.7128&longitude=-74.006&current=temperature_2m,precipitation,wind_speed_10m&timezone=America%2FDenver&forecast_days=3&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch";
 });
