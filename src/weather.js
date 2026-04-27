@@ -1,13 +1,15 @@
 // build the API URL with the coordinates
-function buildWeatherAPIUrl(lat, lon) {
+export function buildWeatherAPIUrl(lat, lon) {
   return `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,apparent_temperature,weathercode&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
 }
-
-// fetch the weather data and convert to string
-async function formatWeatherData(url) {
-  const stringData = await fetch(url);
-  const apiData = await stringData.json();
-
+//Handles the API respnse calls and returns the used api as an object
+export async function fetchUrl(url){
+  const response = await fetch(url);
+  const apiData = await response.json();
+  return formatWeatherData(apiData);
+}
+// fetch the weather data and convert to json object
+export function formatWeatherData(apiData) {
   const current = apiData.current || {};
 
   return {
@@ -66,21 +68,22 @@ function renderWeatherCard(weatherData, windDegree) {
 
 export async function initWeather(lat, lon) {
   const url = buildWeatherAPIUrl(lat, lon);
-  const weatherApiData = await formatWeatherData(url);
-  const icon = getWeatherIcon(weatherApiData.weatherCode);
-  const windDegree = getWindDirection(weatherApiData);
-  const card = renderWeatherCard(weatherApiData, windDegree, icon);
+  const formattedData = await fetchUrl(url);
+  const icon = getWeatherIcon(formattedData.weatherCode);
+  const windDegree = getWindDirection(formattedData);
+  const card = renderWeatherCard(formattedData, windDegree, icon);
 
   const signageColumn = document.getElementById("signage-column");
   if (signageColumn) {
     signageColumn.prepend(card);
   }
 }
+
 export async function refreshWeather(lat, lon) {
   const url = buildWeatherAPIUrl(lat, lon);
-  const weatherData = await formatWeatherData(url);
-  const windDegree = getWindDirection(weatherData);
-  const icon = weatherIcons[weatherData.weatherCode] || "❓";
+  const formattedData = await fetchUrl(url);
+  const windDegree = getWindDirection(formattedData);
+  const icon = weatherIcons[formattedData.weatherCode] || "❓";
 
   const heading = document.getElementById("weather-heading");
   const timezone = document.getElementById("weather-timezone");
@@ -88,10 +91,10 @@ export async function refreshWeather(lat, lon) {
   const wind = document.getElementById("weather-wind");
 
   if (heading)
-    heading.textContent = `${icon}${weatherData.temperature ?? "N/A"}°F`;
-  if (timezone) timezone.textContent = weatherData.timeZone ?? "N/A";
+    heading.textContent = `${icon}${formattedData.temperature ?? "N/A"}°F`;
+  if (timezone) timezone.textContent = formattedData.timeZone ?? "N/A";
   if (feels)
-    feels.textContent = `Feels like: ${weatherData.apparentTemperature ?? "N/A"}°F`;
+    feels.textContent = `Feels like: ${formattedData.apparentTemperature ?? "N/A"}°F`;
   if (wind)
-    wind.textContent = `${weatherData.windSpeed ?? "N/A"} mph ${windDegree ?? "N/A"}`;
+    wind.textContent = `${formattedData.windSpeed ?? "N/A"} mph ${windDegree ?? "N/A"}`;
 }
