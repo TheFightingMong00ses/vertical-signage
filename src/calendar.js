@@ -1,6 +1,13 @@
 const API_KEY = 'AIzaSyA5P7oin4sIt9YIF2duHNnEzKSMTTcDXM0';
 const CALENDAR_ID = '822f45b9a5bfd09202fefbe67cf78a0d96861e6ec514f4978c864e5a570f56fd@group.calendar.google.com';
 
+function toLocalDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 async function displayWeekView() {
   const now = new Date();
   const weekEnd = new Date(now);
@@ -11,7 +18,7 @@ async function displayWeekView() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(now);
     d.setDate(d.getDate() + i);
-    const key = d.toISOString().split('T')[0];
+    const key = toLocalDateKey(d);
     days[key] = []; // start empty, events will fill in if they exist
   }
 
@@ -38,34 +45,57 @@ async function displayWeekView() {
   const container = document.getElementById('calendar');
   container.innerHTML = '';
 
+  // Create the grid wrapper
+  const grid = document.createElement('div');
+  grid.className = 'vs-calendar-grid';
+
   Object.entries(days).forEach(([date, events]) => {
-    const isToday = date === now.toISOString().split('T')[0];
-    const card = document.createElement('div');
-    card.className = 'vs-calendar-day' + (isToday ? ' vs-calendar-today' : '');
+    const isToday = date === toLocalDateKey(now);
+    const [year, month, day] = date.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
 
-    const heading = document.createElement('h3');
-    heading.textContent = new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long', month: 'short', day: 'numeric'
-    });
+    const col = document.createElement('div');
+    col.className = 'vs-calendar-col' + (isToday ? ' vs-calendar-today' : '');
+     // Day header
+    const header = document.createElement('div');
+    header.className = 'vs-calendar-col-header';
 
-    card.appendChild(heading);
+    const dayName = document.createElement('span');
+    dayName.className = 'vs-calendar-dayname';
+    dayName.textContent = dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
 
+    const dayNum = document.createElement('span');
+    dayNum.className = 'vs-calendar-daynum' + (isToday ? ' vs-calendar-daynum-today' : '');
+    dayNum.textContent = dateObj.getDate();
+
+    header.appendChild(dayName);
+    header.appendChild(dayNum);
+    col.appendChild(header);
+
+    // Events
     if (events.length === 0) {
       const empty = document.createElement('p');
-      empty.className = 'vs-card-body';
-      empty.textContent = 'No events';
-      card.appendChild(empty);
+      empty.className = 'vs-calendar-empty';
+      empty.textContent = '';
+      col.appendChild(empty);
     } else {
       events.forEach(e => {
-        const p = document.createElement('p');
-        p.textContent = `${e.summary} — ${e.start.dateTime ? new Date(e.start.dateTime).toLocaleTimeString() : 'All Day'}`;
-        card.appendChild(p);
+        const event = document.createElement('div');
+        event.className = 'vs-calendar-event';
+
+        const startTime = e.start.dateTime
+          ? new Date(e.start.dateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+          : 'All Day';
+
+        event.textContent = `${startTime} ${e.summary}`;
+        col.appendChild(event);
       });
     }
-
-    container.appendChild(card);
+    grid.appendChild(col);
   });
+container.appendChild(grid);
 }
+
 document.addEventListener('vs:config-rendered', function() {
   // Create and insert the calendar container above the RSS card
   const column = document.getElementById('signage-column');
@@ -73,13 +103,17 @@ document.addEventListener('vs:config-rendered', function() {
 
   const calendarCard = document.createElement('div');
   calendarCard.id = 'calendar';
-  calendarCard.className = 'vs-card'; // matches existing card styling
+  calendarCard.className = 'vs-card';
 
   if (rssCard) {
-    column.insertBefore(calendarCard, rssCard); // places it directly above RSS
+    column.insertBefore(calendarCard, rssCard);
   } else {
-    column.appendChild(calendarCard); // fallback if RSS card isn't there yet
+    column.appendChild(calendarCard);
   }
 
+  // Initial load
   displayWeekView();
-});
+
+  // Refresh every 5 minutes
+  setInterval(displayWeekView, 5 * 60 * 1000);
+}, { once: true });
