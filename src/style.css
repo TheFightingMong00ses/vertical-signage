@@ -199,8 +199,40 @@ body {
   color: #4b5563;
 }
 
-/* @media(orientation: landscape) vs @media(orientation: portrait)*/
+/* Clock Card */
+.vs-clock-card {
+  text-align: center;
+}
 
+.vs-clock-time {
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: 0.05rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin: 0.5rem 0 0.35rem;
+}
+
+.vs-clock-date {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  margin-bottom: 0.35rem;
+}
+
+.vs-clock-tz {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12rem;
+  color: #4b5563;
+}
+
+.vs-clock-theme-light .vs-clock-time {
+  color: #e0f2f3;
+}
+
+.vs-clock-theme-dark .vs-clock-time {
+  color: #94a3b8;
+}
 
 @media (min-height: 900px) {
   .vs-main {

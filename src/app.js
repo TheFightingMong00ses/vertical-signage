@@ -1,20 +1,14 @@
 // Basic vertical signage logic using plain JavaScript.
 // Reads configuration from config/config.json and renders "cards" vertically.
-
-const API_KEY = 'AIzaSyA5P7oin4sIt9YIF2duHNnEzKSMTTcDXM0';
-const CALENDAR_ID = '822f45b9a5bfd09202fefbe67cf78a0d96861e6ec514f4978c864e5a570f56fd@group.calendar.google.com';
-
-(function () {
-  var signageColumn = document.getElementById("signage-column");
-  var statusEl = document.getElementById("vs-status");
 import { initRSS } from "./rss.js";
 import { initWeather, refreshWeather } from "./weather.js";
+import { initClock } from "./clock.js";
+
 var signageColumn = document.getElementById("signage-column");
 var statusEl = document.getElementById("vs-status");
 
-  if (!signageColumn) {
-    return;
-  }
+const API_KEY = 'AIzaSyA5P7oin4sIt9YIF2duHNnEzKSMTTcDXM0';
+const CALENDAR_ID = '822f45b9a5bfd09202fefbe67cf78a0d96861e6ec514f4978c864e5a570f56fd@group.calendar.google.com';
 
   // -- Helper functions
 if (!signageColumn) {
@@ -99,22 +93,6 @@ if (!signageColumn) {
     // position themselves after them (e.g. the RSS card stays at the bottom).
     document.dispatchEvent(new CustomEvent("vs:config-rendered"));
      setTimeout(setupCalendar, 0);
-  }
-function setStatus(message) {
-  if (statusEl) {
-    statusEl.textContent = message;
-  }
-}
-
-  function applyDisplaySettings(settings) {
-    if (!settings) return;
-
-    if (typeof settings.fontScale === "number") {
-      document.documentElement.style.setProperty(
-        "--vs-font-scale",
-        String(settings.fontScale),
-      );
-    }
   }
 
 // -- Calendar
@@ -256,16 +234,29 @@ function loadConfig() {
     })
     .then(function (config) {
       applyDisplaySettings(config.displaySettings);
-      setStatus("Config loaded");
-      const weatherConfig = config.widgets.find((w) => w.type === "weather");
-      const rssConfig = config.widgets.find((w) => w.type === "rss");
+      renderItems(config.items);
+      setStatus("Config loaded (" + (config.items || []).length + " items)");
 
-      if (weatherConfig) initWeather(weatherConfig.lat, weatherConfig.lon);
-      if (rssConfig) initRSS();
-    })
+  // Clock — prepends to top of column
+      const clockConfig = config.widgets && config.widgets.find((w) => w.type === "clock");
+      if (clockConfig) initClock(clockConfig);
+
+  // Weather
+      const weatherConfig = config.widgets && config.widgets.find((w) => w.type === "weather");
+      if (weatherConfig) {
+        initWeather(weatherConfig.lat, weatherConfig.lon);
+        startRefreshCycle(config);
+      }
+
+  // RSS and calendar via setTimeout so they land below
+      setTimeout(function() {
+       initRSS();
+     }, 0);
+})
     .catch(function (error) {
       console.error("Failed to load config:", error);
       setStatus("Failed to load config. See console.");
+      renderItems([]);
     });
 }
 
