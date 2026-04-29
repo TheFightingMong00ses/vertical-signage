@@ -207,7 +207,7 @@ body {
 .vs-clock-time {
   font-size: 3rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.05rem;
   font-variant-numeric: tabular-nums;
   line-height: 1;
   margin: 0.5rem 0 0.35rem;
@@ -222,12 +222,12 @@ body {
 .vs-clock-tz {
   font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.12rem;
   color: #4b5563;
 }
 
 .vs-clock-theme-light .vs-clock-time {
-  color: #e0f2fe;
+  color: #e0f2f3;
 }
 
 .vs-clock-theme-dark .vs-clock-time {
@@ -272,4 +272,71 @@ body {
   position: absolute;
   bottom: 0.2rem;
   right: 0;
+}
+
+/* Calendar grid */
+.vs-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.vs-calendar-col {
+  padding: 0.4rem 0.3rem;
+  border-right: 1px solid #1f2937;
+  min-height: 80px;
+}
+
+.vs-calendar-col:last-child {
+  border-right: none;
+}
+
+.vs-calendar-col-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.vs-calendar-dayname {
+  font-size: 0.6rem;
+  color: #9ca3af;
+  letter-spacing: 0.05em;
+}
+
+.vs-calendar-daynum {
+  font-size: 0.85rem;
+  color: #f9fafb;
+  font-weight: 500;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/* Today highlight — blue circle like the image */
+.vs-calendar-daynum-today {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.vs-calendar-today {
+  border-left: none;
+  padding-left: 0.3rem;
+}
+
+.vs-calendar-event {
+  font-size: 0.65rem;
+  background: #5b3fa6;
+  color: #ffffff;
+  border-radius: 3px;
+  padding: 0.15rem 0.3rem;
+  margin-bottom: 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
