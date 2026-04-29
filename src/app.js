@@ -7,12 +7,19 @@ const CALENDAR_ID = '822f45b9a5bfd09202fefbe67cf78a0d96861e6ec514f4978c864e5a570
 (function () {
   var signageColumn = document.getElementById("signage-column");
   var statusEl = document.getElementById("vs-status");
+import { initRSS } from "./rss.js";
+import { initWeather, refreshWeather } from "./weather.js";
+var signageColumn = document.getElementById("signage-column");
+var statusEl = document.getElementById("vs-status");
 
   if (!signageColumn) {
     return;
   }
 
   // -- Helper functions
+if (!signageColumn) {
+  throw new Error("signage-column not found");
+}
 
   function setStatus(message) {
     if (statusEl) {
@@ -93,6 +100,11 @@ const CALENDAR_ID = '822f45b9a5bfd09202fefbe67cf78a0d96861e6ec514f4978c864e5a570
     document.dispatchEvent(new CustomEvent("vs:config-rendered"));
      setTimeout(setupCalendar, 0);
   }
+function setStatus(message) {
+  if (statusEl) {
+    statusEl.textContent = message;
+  }
+}
 
   function applyDisplaySettings(settings) {
     if (!settings) return;
@@ -213,28 +225,48 @@ function setupCalendar(){
 }
 
 // -- Config load
-
-  function loadConfig() {
-    setStatus("Loading configuration…");
-
-    fetch("../config/config.json", { cache: "no-store" })
-      .then(function (response) {
-        if (!response.ok) {
-          throw new Error("HTTP " + response.status);
-        }
-        return response.json();
-      })
-      .then(function (config) {
-        applyDisplaySettings(config.displaySettings);
-        renderItems(config.items);
-        setStatus("Config loaded (" + (config.items || []).length + " items)");
-      })
-      .catch(function (error) {
-        console.error("Failed to load config:", error);
-        setStatus("Failed to load config. See console.");
-        renderItems([]);
-      });
+function applyDisplaySettings(settings) {
+  if (!settings) return;
+  if (typeof settings.fontScale === "number") {
+    document.documentElement.style.setProperty(
+      "--vs-font-scale",
+      String(settings.fontScale),
+    );
   }
+}
 
-  loadConfig();
-})();
+function startRefreshCycle(config) {
+  const intervalMs = config.displaySettings.refreshMinutes * 60 * 1000;
+
+  setInterval(function () {
+    const weatherConfig = config.widgets.find((w) => w.type === "weather");
+    if (weatherConfig) refreshWeather(weatherConfig.lat, weatherConfig.lon);
+  }, intervalMs);
+}
+
+function loadConfig() {
+  setStatus("Loading configuration…");
+
+  fetch("../config/config.json", { cache: "no-store" })
+    .then(function (response) {
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status);
+      }
+      return response.json();
+    })
+    .then(function (config) {
+      applyDisplaySettings(config.displaySettings);
+      setStatus("Config loaded");
+      const weatherConfig = config.widgets.find((w) => w.type === "weather");
+      const rssConfig = config.widgets.find((w) => w.type === "rss");
+
+      if (weatherConfig) initWeather(weatherConfig.lat, weatherConfig.lon);
+      if (rssConfig) initRSS();
+    })
+    .catch(function (error) {
+      console.error("Failed to load config:", error);
+      setStatus("Failed to load config. See console.");
+    });
+}
+
+loadConfig();
