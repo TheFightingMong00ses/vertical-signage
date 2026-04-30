@@ -15,13 +15,8 @@
       "timezone": "America/Denver"
     },
     {
-      "type": "rss",
-      "feeds": [
-        "",
-        "",
-        "",
-        ""
-      ]
+      "type": "rss"
+      
     },
     {
       "type": "calendar"

@@ -1,4 +1,4 @@
-import { buildWeatherAPIUrl, formatWeatherData } from "../src/weather.js";
+import { buildWeatherAPIUrl, formatWeatherData } from "../public/src/weather.js";
 
 describe("formatWeatherData", () => {
   test("extracts current weather values from API data", () => {

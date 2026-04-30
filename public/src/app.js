@@ -214,9 +214,10 @@ function applyDisplaySettings(settings) {
 }
 
 function startRefreshCycle(config) {
-  const intervalMs = config.displaySettings.refreshMinutes * 60 * 1000;
+  const intervalMs = (config.displaySettings?.refreshMinutes ?? 10) * 60 * 1000;
 
   setInterval(function () {
+    const widgets = config.widgets ?? [];
     const weatherConfig = config.widgets.find((w) => w.type === "weather");
     if (weatherConfig) refreshWeather(weatherConfig.lat, weatherConfig.lon);
   }, intervalMs);
@@ -234,8 +235,18 @@ function loadConfig() {
     })
     .then(function (config) {
       applyDisplaySettings(config.displaySettings);
+
       renderItems(config.items);
       setStatus("Config loaded (" + (config.items || []).length + " items)");
+
+      setStatus("Config loaded");
+
+      const widgets= config.widgets ?? [];
+
+      const weatherConfig = widgets.find((w) => w.type === "weather");
+      const clockConfig = widgets.find((w) => w.type === "clock");
+      const rssConfig = widgets.find((w) => w.type === "rss");
+
 
   // Clock — prepends to top of column
       const clockConfig = config.widgets && config.widgets.find((w) => w.type === "clock");

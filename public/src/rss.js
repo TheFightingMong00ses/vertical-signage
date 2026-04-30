@@ -406,14 +406,14 @@ function fetchFeedForSlot(slot) {
   }
 
   var feed = FEEDS[slot.feedIndex];
-  var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(feed.url);
+  //var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(feed.url);
 
   var label = document.getElementById(slotId(slot.id, "label"));
   if (label)
     label.innerHTML =
       '<span class="vs-rss-dot"></span> Loading ' + feed.label + "\u2026";
 
-  fetch(PROXY_URL)
+  fetch("/rss/architecture")
     .then(function (res) {
       if (!res.ok) throw new Error("Network error");
       return res.text();
