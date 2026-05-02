@@ -71,6 +71,28 @@ for (var i = 0; i < NUM_SLOTS; i++) {
   });
 }
 
+// ── Feed-index cycling ─────────────────────────────────────────────────────
+// Returns the next feed index after `currentIndex` that is not already
+// assigned to another slot, so no source repeats within a full cycle.
+// If every feed is already in use (more slots than feeds), it falls back to
+// simple round-robin to avoid an infinite loop.
+function nextUnusedFeedIndex(currentIndex, excludeSlotId) {
+  var usedIndexes = {};
+  for (var i = 0; i < slots.length; i++) {
+    if (slots[i].id !== excludeSlotId) {
+      usedIndexes[slots[i].feedIndex] = true;
+    }
+  }
+
+  var candidate = (currentIndex + 1) % FEEDS.length;
+  var checked = 0;
+  while (usedIndexes[candidate] && checked < FEEDS.length) {
+    candidate = (candidate + 1) % FEEDS.length;
+    checked++;
+  }
+  return candidate;
+}
+
 // ── RSS parsing helpers ────────────────────────────────────────────────────
 function parseRSS(xmlString) {
   var parser = new DOMParser();
@@ -188,6 +210,12 @@ function createSlotDOM(slotIdx) {
   counter.id = slotId(slotIdx, "counter");
   counter.textContent = "";
 
+  var qr = document.createElement("img");
+  qr.className = "vs-rss-qr";
+  qr.id = slotId(slotIdx, "qr");
+  qr.alt = "QR code";
+  qr.style.cssText = "flex-shrink:0;width:80px;height:80px;align-self:center;border-radius:4px;";
+
   var content = document.createElement("div");
   content.className = "vs-rss-content";
   content.id = slotId(slotIdx, "content");
@@ -195,12 +223,27 @@ function createSlotDOM(slotIdx) {
   content.appendChild(body);
   content.appendChild(meta);
 
+  var contentRow = document.createElement("div");
+  contentRow.className = "vs-rss-content-row";
+  contentRow.style.cssText = "display:flex;align-items:flex-start;gap:0.75rem;";
+  contentRow.appendChild(content);
+  contentRow.appendChild(qr);
+
   wrapper.appendChild(label);
-  wrapper.appendChild(content);
+  wrapper.appendChild(contentRow);
   wrapper.appendChild(progress);
   wrapper.appendChild(counter);
 
   return wrapper;
+}
+
+// -- QR code rendering ------------------------------------------------------
+function renderQR(slotIdx, url) {
+  var img = document.getElementById(slotId(slotIdx, "qr"));
+  if (!img || !url || url === "#") return;
+  img.src =
+    "https://api.qrserver.com/v1/create-qr-code/?size=80x80&ecc=M&data=" +
+    encodeURIComponent(url);
 }
 
 // -- Per-slot article display -----------------------------------------------
@@ -228,6 +271,7 @@ function showArticle(slot) {
     body.textContent = article.description;
     meta.textContent = article.date;
     counter.textContent = slot.articleIndex + 1 + " / " + slot.articles.length;
+    renderQR(slot.id, article.link);
     if (slotEl) {
       // Disable the height transition just for this first paint, then
       // re-enable it after the browser has had a frame to measure from.
@@ -251,6 +295,7 @@ function showArticle(slot) {
     body.textContent = article.description;
     meta.textContent = article.date;
     counter.textContent = slot.articleIndex + 1 + " / " + slot.articles.length;
+    renderQR(slot.id, article.link);
 
     if (slotEl) {
       // Lock to current rendered height
@@ -302,9 +347,9 @@ function startRotation(slot) {
     slot.articleIndex++;
 
     if (slot.articleIndex >= slot.articles.length) {
-      // Done with this feed — move to the next one
+      // Done with this feed — move to the next one not already showing
       slot.articleIndex = 0;
-      slot.feedIndex = (slot.feedIndex + 1) % FEEDS.length;
+      slot.feedIndex = nextUnusedFeedIndex(slot.feedIndex, slot.id);
       fetchFeedForSlot(slot);
     } else {
       showArticle(slot);
@@ -350,8 +395,8 @@ function fetchFeedForSlot(slot) {
       if (heading)
         heading.textContent = "Could not load feed. Trying next\u2026";
 
-      // Advance to the next feed and retry after a short delay
-      slot.feedIndex = (slot.feedIndex + 1) % FEEDS.length;
+      // Advance to the next feed not already showing, then retry after a short delay
+      slot.feedIndex = nextUnusedFeedIndex(slot.feedIndex, slot.id);
       setTimeout(function () {
         fetchFeedForSlot(slot);
       }, 3000);
