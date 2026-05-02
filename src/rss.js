@@ -267,13 +267,17 @@ function showArticle(slot) {
 
   if (!heading || !body) return;
 
-  // On the very first article, skip the fade+height animation entirely.
-  // The slot has no real height yet (just rendered "Loading…"), so there's
-  // nothing valid to animate from — attempting it causes the startup jank.
-  // Let it paint once at its natural height, then all subsequent transitions
-  // will be smooth.
-  if (!slot.hasShownFirst) {
+  // On the very first article ever, skip the fade+height animation entirely.
+  // The slot only has "Loading\u2026" placeholder text so there's nothing valid
+  // to animate from \u2014 attempting it causes startup jank.
+  //
+  // hasShownFirst is reset to false on fetch error/retry, but hasRenderedOnce
+  // stays true permanently once a real article has painted. On a retry the
+  // slot already has real content and a valid height, so we fall through to
+  // the normal animated transition instead of snapping in.
+  if (!slot.hasShownFirst && !slot.hasRenderedOnce) {
     slot.hasShownFirst = true;
+    slot.hasRenderedOnce = true;
     heading.textContent = article.title;
     body.textContent = article.description;
     meta.textContent = article.date;
@@ -315,10 +319,18 @@ function showArticle(slot) {
     return;
   }
 
-  // 1. Fade out content
+  // Mark first paint done — covers both the normal second-article path and
+  // the retry-with-existing-height path that bypassed the cold-start branch.
+  slot.hasShownFirst = true;
+
+  // 1. Fade out content — skip the wait if it's already invisible (e.g. the
+  // fetch success handler pre-faded it before calling startRotation).
+  var alreadyHidden = content && content.style.opacity === "0";
   if (content) content.style.opacity = "0";
 
-  // 2. After fade completes, swap content, measure new height, animate slot
+  // 2. After fade completes (or immediately if already hidden), swap content,
+  // measure new height, animate slot.
+  var swapDelay = alreadyHidden ? 0 : 550;
   setTimeout(function () {
     heading.textContent = article.title;
     body.textContent = article.description;
@@ -354,7 +366,7 @@ function showArticle(slot) {
       if (content) content.style.opacity = "1";
       startProgressBar(slot.id);
     }
-  }, 550); // match CSS opacity transition duration (0.55s)
+  }, swapDelay); // 550ms to match fade, or 0 if content was pre-faded
 }
 
 function startProgressBar(slotIdx) {
@@ -416,7 +428,26 @@ function fetchFeedForSlot(slot) {
       var lbl = document.getElementById(slotId(slot.id, "label"));
       if (lbl) lbl.innerHTML = '<span class="vs-rss-dot"></span> ' + feed.label;
 
-      startRotation(slot);
+      // If this is a retry (hasRenderedOnce is true), the content is currently
+      // showing the error message at some unknown opacity. Force it to opacity 1
+      // first, then let it fade to 0, so showArticle's normal transition has a
+      // defined visible start state to animate from instead of snapping in.
+      if (slot.hasRenderedOnce) {
+        var contentEl = document.getElementById(slotId(slot.id, "content"));
+        if (contentEl) {
+          contentEl.style.opacity = "1";
+          requestAnimationFrame(function () {
+            contentEl.style.opacity = "0";
+            setTimeout(function () {
+              startRotation(slot);
+            }, 550);
+          });
+        } else {
+          startRotation(slot);
+        }
+      } else {
+        startRotation(slot);
+      }
     })
     .catch(function (err) {
       console.error("RSS fetch failed for slot " + slot.id + ":", err);
@@ -435,8 +466,9 @@ function fetchFeedForSlot(slot) {
         renderQR(slot.id, null);
         if (content) content.style.opacity = "1";
 
-        // Reset hasShownFirst so the retry gets a clean first-paint:
-        // transitions disabled, height measured, content faded in fresh.
+        // Reset hasShownFirst so the retry can re-enter the normal animated
+        // path (the cold-start branch is skipped because the slot already has
+        // a real height, so the transition will be smooth either way).
         slot.hasShownFirst = false;
         slot.feedIndex = nextUnusedFeedIndex(slot.feedIndex, slot.id);
         setTimeout(function () {
