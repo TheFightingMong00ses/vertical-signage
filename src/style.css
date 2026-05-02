@@ -249,7 +249,7 @@ body {
 
 .vs-rss-slot {
   position: relative;
-  padding-bottom: 2.1rem; /* reserve space for progress bar + counter */
+  padding-bottom: 2.8rem; /* reserve space for progress bar + counter */
   transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
