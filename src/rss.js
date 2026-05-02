@@ -216,21 +216,21 @@ function createSlotDOM(slotIdx) {
   qr.alt = "QR code";
   qr.style.cssText = "flex-shrink:0;width:80px;height:80px;align-self:center;border-radius:4px;";
 
+  var textCol = document.createElement("div");
+  textCol.style.cssText = "flex:1;min-width:0;";
+  textCol.appendChild(heading);
+  textCol.appendChild(body);
+  textCol.appendChild(meta);
+
   var content = document.createElement("div");
   content.className = "vs-rss-content";
   content.id = slotId(slotIdx, "content");
-  content.appendChild(heading);
-  content.appendChild(body);
-  content.appendChild(meta);
-
-  var contentRow = document.createElement("div");
-  contentRow.className = "vs-rss-content-row";
-  contentRow.style.cssText = "display:flex;align-items:flex-start;gap:0.75rem;";
-  contentRow.appendChild(content);
-  contentRow.appendChild(qr);
+  content.style.cssText = "display:flex;align-items:flex-start;gap:0.75rem;transition:opacity 0.55s ease;";
+  content.appendChild(textCol);
+  content.appendChild(qr);
 
   wrapper.appendChild(label);
-  wrapper.appendChild(contentRow);
+  wrapper.appendChild(content);
   wrapper.appendChild(progress);
   wrapper.appendChild(counter);
 
