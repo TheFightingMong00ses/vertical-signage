@@ -214,7 +214,7 @@ function createSlotDOM(slotIdx) {
   qr.className = "vs-rss-qr";
   qr.id = slotId(slotIdx, "qr");
   qr.alt = "QR code";
-  qr.style.cssText = "flex-shrink:0;width:80px;height:80px;align-self:center;border-radius:4px;";
+  qr.style.cssText = "flex-shrink:0;width:80px;height:80px;align-self:center;border-radius:4px;display:none;";
 
   var textCol = document.createElement("div");
   textCol.style.cssText = "flex:1;min-width:0;";
@@ -240,7 +240,14 @@ function createSlotDOM(slotIdx) {
 // -- QR code rendering ------------------------------------------------------
 function renderQR(slotIdx, url) {
   var img = document.getElementById(slotId(slotIdx, "qr"));
-  if (!img || !url || url === "#") return;
+  if (!img) return;
+  if (!url || url === "#") {
+    img.style.display = "none";
+    img.src = "";
+    return;
+  }
+  img.onload = function () { img.style.display = "block"; };
+  img.onerror = function () { img.style.display = "none"; };
   img.src =
     "https://api.qrserver.com/v1/create-qr-code/?size=80x80&ecc=M&data=" +
     encodeURIComponent(url);
