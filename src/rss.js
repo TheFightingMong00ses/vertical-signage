@@ -54,6 +54,8 @@ var FEEDS = [
   },
 ];
 
+var feedCache = {};
+var CACHE_TTL_MS = 10*60*1000;
 var NUM_SLOTS = 4;
 var ROTATE_INTERVAL_MS = 10000; // rotate story every 10 seconds
 // Since Steve wanted the feed to move all the way through, the 10 minute refresh interval is no longer necessary.
@@ -412,6 +414,18 @@ function fetchFeedForSlot(slot) {
   if (label)
     label.innerHTML =
       '<span class="vs-rss-dot"></span> Loading ' + feed.label + "\u2026";
+  var cached = feedCache[feed.url];
+  if (cached && Date.now() - cached.time < CACHE_TTL_MS) {
+    slot.articles = cached.articles;
+    slot.articleIndex = 0;
+
+    var lbl = document.getElementById(slotId(slot.id, "label"));
+    if (lbl)
+      lbl.innerHTML = '<span class="vs-rss-dot"></span> ' + feed.label;
+
+    startRotation(slot);
+    return; 
+  }
 
   fetch(PROXY_URL)
     .then(function (res) {
@@ -421,6 +435,8 @@ function fetchFeedForSlot(slot) {
     .then(function (data) {
       var parsed = parseRSS(data);
       if (parsed.length === 0) throw new Error("No articles found");
+
+      feedCache[feed.url] = { articles: parsed, time: Date.now() };
 
       slot.articles = parsed;
       slot.articleIndex = 0;
