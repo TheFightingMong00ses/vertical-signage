@@ -1,292 +1,311 @@
-*,
-*::before,
-*::after {
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-body {
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  background: #000208;
-  color: #f9fafb;
-  min-height: 100vh;
+:root {
+  --bg-deep:       #050810;
+  --bg-card:       #080d18;
+  --bg-card-hero:  rgba(8, 13, 24, 0.55);
+  --border:        #0d1f3c;
+  --border-hero:   rgba(29, 64, 184, 0.4);
+  --blue-bright:   #7dd3fc;
+  --blue-mid:      #3b82f6;
+  --blue-dim:      #1d4ed8;
+  --blue-deep:     #1d3461;
+  --blue-darkest:  #0d1f3c;
+  --text-primary:  #e2e8f0;
+  --text-secondary:#8b8fa8;
+  --text-muted:    #3b4057;
+  --red-dot:       #ef4444;
+  --font-display:  'IBM Plex Mono', monospace;
+  --font-body:     'IBM Plex Sans', sans-serif;
 }
 
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── App shell ─────────────────────────────────────────────────────────── */
 #app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   max-width: 480px;
   margin: 0 auto;
-  border-left: 1px solid #111827;
-  border-right: 1px solid #111827;
-  background: radial-gradient(circle at top, #111827, #020617 55%);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: var(--bg-deep);
 }
 
+/* ── Header ────────────────────────────────────────────────────────────── */
 .vs-header {
-  padding: 1.5rem 1rem 1rem;
-  text-align: center;
-  border-bottom: 1px solid #111827;
-  background: linear-gradient(to bottom, #020617, #020617cc);
-  backdrop-filter: blur(8px);
-}
-
-.vs-header h1 {
-  font-size: 1.5rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.vs-subtitle {
-  margin-top: 0.25rem;
-  font-size: 0.8rem;
-  color: #9ca3af;
-}
-
-.vs-main {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1rem 0.75rem 1.25rem;
-}
-
-.vs-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.vs-card {
-  padding: 1rem 1.1rem;
-  border-radius: 0.9rem;
-  background: linear-gradient(145deg, #0b1120, #020617);
-  border: 1px solid #1f2937;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.9);
-}
-
-.vs-card-title {
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: #9ca3af;
-  margin-bottom: 0.4rem;
-}
-
-.vs-card-heading {
-  font-size: 1.3rem;
-  margin-bottom: 0.4rem;
-  font-weight: 600;
-}
-
-.vs-card-body {
-  font-size: 0.9rem;
-  color: #d1d5db;
-}
-
-.vs-chip-row {
-  margin-top: 0.75rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.vs-chip {
-  font-size: 0.7rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  color: #e5e7eb;
-  background: rgba(15, 23, 42, 0.75);
-}
-
-.vs-footer {
-  padding: 0.6rem 0.9rem;
-  font-size: 0.75rem;
-  color: #9ca3af;
-  border-top: 1px solid #111827;
-  background: #020617ee;
+  padding: 1rem 1.25rem 0.85rem;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg-deep);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.vs-footer span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.vs-header h1 {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--blue-bright);
 }
 
-.vs-footer::after {
-  content: "Vertical mode";
-  font-size: 0.7rem;
+.vs-subtitle {
+  font-size: 0.65rem;
+  color: var(--blue-deep);
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #4b5563;
+  margin-top: 0.15rem;
 }
 
-/* RSS Card */
-.vs-rss-card {
-  border-color: #1e3a5f;
-  background: linear-gradient(145deg, #0a1628, #020617);
-  position: relative;
-  padding-bottom: 1rem;
-}
-
-.vs-rss-content {
-  transition: opacity 0.55s ease;
-}
-
-.vs-rss-label {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: #60a5fa;
-}
-
-.vs-rss-dot {
+.vs-header-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #ef4444;
-  display: inline-block;
-  animation: vs-pulse 1.5s infinite;
+  background: var(--blue-mid);
+  box-shadow: 0 0 8px var(--blue-mid);
+  animation: vs-pulse-dot 2.5s ease-in-out infinite;
 }
 
-@keyframes vs-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
+@keyframes vs-pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--blue-mid); }
+  50%       { opacity: 0.6; box-shadow: 0 0 3px var(--blue-mid); }
 }
 
-.vs-rss-meta {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: 0.5rem;
+/* ── Main scroll area ──────────────────────────────────────────────────── */
+.vs-main {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.vs-main::-webkit-scrollbar { display: none; }
+
+.vs-column {
+  display: flex;
+  flex-direction: column;
 }
 
-.vs-rss-progress {
-  position: absolute;
-  bottom: 1.5rem;
-  left: 1.1rem;
-  right: 1.1rem;
-  height: 2px;
-  background: #1f2937;
-  border-radius: 999px;
+/* ── Hero photo section ────────────────────────────────────────────────── */
+.vs-hero {
+  position: relative;
   overflow: hidden;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
-.vs-rss-bar {
-  height: 100%;
-  background: #3b82f6;
-  width: 0%;
-  border-radius: 999px;
-}
-
-.vs-rss-counter {
+.vs-hero-bg {
   position: absolute;
-  bottom: 0.3rem;
-  right: 1.1rem;
-  font-size: 0.7rem;
-  color: #4b5563;
+  inset: 0;
+  z-index: 0;
 }
 
-/* Clock Card */
-.vs-clock-card {
-  text-align: center;
+.vs-hero-photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(0.0px) brightness(1.0);
+  transform: scale(1.08);
+  transition: opacity 1.2s ease;
 }
 
-.vs-clock-time {
-  font-size: 3rem;
-  font-weight: 700;
-  letter-spacing: 0.05rem;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  margin: 0.5rem 0 0.35rem;
+.vs-hero-photo.fade-out {
+  opacity: 0;
 }
 
-.vs-clock-date {
-  font-size: 0.9rem;
-  color: #9ca3af;
+.vs-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 16, 0.35);
+}
+
+/* Slideshow dots */
+.vs-hero-dots {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  padding: 0.3rem 0 0.1rem;
+}
+
+.vs-hero-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.vs-hero-dot.active {
+  background: var(--blue-bright);
+  box-shadow: 0 0 5px rgba(125, 211, 252, 0.5);
+}
+
+/* ── Cards (hero variants) ─────────────────────────────────────────────── */
+.vs-card {
+  position: relative;
+  z-index: 2;
+  padding: 0.85rem 1rem;
+  border-radius: 0.6rem;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+}
+
+.vs-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--blue-mid), transparent);
+  border-radius: 0.6rem 0.6rem 0 0;
+  opacity: 0.5;
+}
+
+/* Hero cards get frosted glass treatment */
+.vs-hero .vs-card {
+  background: var(--bg-card-hero);
+  border-color: var(--border-hero);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+/* ── Card label / title ────────────────────────────────────────────────── */
+.vs-card-title {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(125, 211, 252, 0.55);
   margin-bottom: 0.35rem;
 }
 
+/* ── Clock ─────────────────────────────────────────────────────────────── */
+.vs-clock-card {
+  text-align: center;
+  margin-bottom: 0.6rem;
+}
+
+.vs-clock-time {
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: var(--blue-bright);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 20px rgba(125, 211, 252, 0.25);
+  margin: 0.2rem 0 0.3rem;
+}
+
+.vs-clock-date {
+  font-size: 0.75rem;
+  color: var(--blue-mid);
+  margin-bottom: 0.2rem;
+}
+
 .vs-clock-tz {
-  font-size: 0.7rem;
+  font-family: var(--font-display);
+  font-size: 0.55rem;
   text-transform: uppercase;
-  letter-spacing: 0.12rem;
-  color: #4b5563;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
 }
 
-.vs-clock-theme-light .vs-clock-time {
-  color: #e0f2f3;
-}
-
-.vs-clock-theme-dark .vs-clock-time {
-  color: #94a3b8;
-}
-
-@media (min-height: 900px) {
-  .vs-main {
-    padding-top: 1.25rem;
-    padding-bottom: 1.75rem;
-  }
-}
-
-/* ── Multi-slot RSS layout ─────────────────────────────────────────────── */
-.vs-rss-card {
-  /* Remove the fixed bottom padding — each slot manages its own spacing */
-  padding-bottom: 1rem;
-}
-
-.vs-rss-slot {
+/* ── Weather ───────────────────────────────────────────────────────────── */
+.weather-card {
   position: relative;
-  padding-bottom: 2.8rem; /* reserve space for progress bar + counter */
-  transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  z-index: 2;
+  padding: 0.85rem 1rem;
+  border-radius: 0.6rem;
+  background: var(--bg-card-hero);
+  border: 0.5px solid var(--border-hero);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
 }
 
-.vs-rss-slot-divider {
-  border: none;
-  border-top: 1px solid #1f2937;
-  margin: 0.75rem 0;
-}
-
-/* Make the progress bar and counter position relative to the slot, not the card */
-.vs-rss-progress-slot {
+.weather-card::before {
+  content: '';
   position: absolute;
-  bottom: 1.1rem;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--blue-mid), transparent);
+  border-radius: 0.6rem 0.6rem 0 0;
+  opacity: 0.5;
 }
 
-.vs-rss-counter-slot {
-  position: absolute;
-  bottom: 0.2rem;
-  right: 0;
+#weather-heading {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: var(--blue-bright);
+  line-height: 1;
+  margin-bottom: 0.3rem;
 }
 
-/* Calendar grid */
+#weather-timezone {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  display: block;
+  font-family: var(--font-display);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.35rem;
+}
+
+#weather-feels, #weather-wind {
+  font-size: 0.75rem;
+  color: var(--blue-dim);
+  margin-top: 0.15rem;
+}
+
+/* ── Section divider (hero → plain) ───────────────────────────────────── */
+.vs-section-divider {
+  height: 0.5px;
+  background: var(--border);
+  margin: 0;
+}
+
+/* ── Plain body section ────────────────────────────────────────────────── */
+.vs-body {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: var(--bg-deep);
+}
+
+/* ── Calendar ──────────────────────────────────────────────────────────── */
+#calendar.vs-card {
+  background: var(--bg-card);
+  border-color: var(--border);
+}
+
 .vs-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0;
   width: 100%;
-  overflow: hidden;
 }
 
 .vs-calendar-col {
-  padding: 0.4rem 0.3rem;
-  border-right: 1px solid #1f2937;
-  min-height: 80px;
+  padding: 0.3rem 0.2rem;
+  border-right: 0.5px solid var(--border);
 }
 
 .vs-calendar-col:last-child {
@@ -297,46 +316,178 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem;
 }
 
 .vs-calendar-dayname {
-  font-size: 0.6rem;
-  color: #9ca3af;
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  color: rgba(59, 130, 246, 0.6);
   letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .vs-calendar-daynum {
-  font-size: 0.85rem;
-  color: #f9fafb;
-  font-weight: 500;
-  width: 24px;
-  height: 24px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Today highlight — blue circle like the image */
 .vs-calendar-daynum-today {
-  background: #3b82f6;
-  color: #ffffff;
+  background: var(--blue-dim);
+  color: var(--blue-bright);
+  box-shadow: 0 0 8px rgba(29, 78, 216, 0.5);
 }
 
 .vs-calendar-today {
-  border-left: none;
-  padding-left: 0.3rem;
+  background: rgba(29, 78, 216, 0.06);
+  border-radius: 0.3rem;
 }
 
 .vs-calendar-event {
-  font-size: 0.65rem;
-  background: #5b3fa6;
-  color: #ffffff;
-  border-radius: 3px;
-  padding: 0.15rem 0.3rem;
-  margin-bottom: 0.2rem;
+  font-size: 0.55rem;
+  background: var(--blue-darkest);
+  color: #93c5fd;
+  border-radius: 2px;
+  padding: 0.1rem 0.25rem;
+  margin-bottom: 0.15rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border-left: 1.5px solid var(--blue-mid);
+}
+
+.vs-calendar-empty {
+  font-size: 0.5rem;
+  color: var(--text-muted);
+}
+
+/* ── RSS Card ──────────────────────────────────────────────────────────── */
+.vs-rss-card {
+  border-color: var(--border);
+  background: var(--bg-card);
+}
+
+.vs-rss-content {
+  transition: opacity 0.55s ease;
+}
+
+.vs-rss-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #60a5fa;
+}
+
+.vs-rss-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red-dot);
+  display: inline-block;
+  box-shadow: 0 0 4px var(--red-dot);
+  animation: vs-pulse 1.5s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes vs-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.vs-rss-meta {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 0.4rem;
+}
+
+.vs-rss-progress-slot {
+  position: absolute;
+  bottom: 1rem;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.vs-rss-bar {
+  height: 100%;
+  background: var(--blue-mid);
+  width: 0%;
+  border-radius: 999px;
+  box-shadow: 0 0 4px var(--blue-mid);
+}
+
+.vs-rss-counter-slot {
+  position: absolute;
+  bottom: 0.2rem;
+  right: 0;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+}
+
+.vs-rss-slot {
+  position: relative;
+  padding-bottom: 2.5rem;
+  transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.vs-rss-slot-divider {
+  border: none;
+  border-top: 0.5px solid var(--border);
+  margin: 0.6rem 0;
+}
+
+/* ── Shared card typography ────────────────────────────────────────────── */
+.vs-card-heading {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.vs-card-body {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────── */
+.vs-footer {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  border-top: 0.5px solid var(--border);
+  background: var(--bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Status hidden in production ───────────────────────────────────────── */
+#vs-status {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+@media (min-height: 900px) {
+  .vs-body { padding-bottom: 1.5rem; }
 }

@@ -8,22 +8,56 @@
   </head>
   <body>
     <div id="app">
+
       <header class="vs-header">
-        <h1>Vertical Signage</h1>
-        <p class="vs-subtitle">Student project – vertical digital display</p>
+        <div>
+          <h1>Vertical Signage</h1>
+          <p class="vs-subtitle">Digital Display</p>
+        </div>
+        <div class="vs-header-dot"></div>
       </header>
 
       <main class="vs-main">
-        <section id="signage-column" class="vs-column">
-          <!-- Content will be rendered here by app.js -->
-        </section>
+        <div class="vs-column">
+
+          <!-- ── Hero section: photo background behind clock/weather/calendar ── -->
+          <div class="vs-hero" id="vs-hero">
+            <div class="vs-hero-bg">
+              <div class="vs-hero-photo" id="vs-hero-photo-a"></div>
+              <div class="vs-hero-photo" id="vs-hero-photo-b" style="opacity:0;"></div>
+              <div class="vs-hero-overlay"></div>
+            </div>
+
+            <!-- Clock and weather are prepended here by their JS modules -->
+            <!-- The signage-column div below is the insertion point for clock/weather -->
+            <div id="signage-column-hero"></div>
+
+            <!-- Calendar renders here -->
+            <div id="calendar-hero"></div>
+
+            <div class="vs-hero-dots" id="vs-hero-dots"></div>
+          </div>
+
+          <div class="vs-section-divider"></div>
+
+          <!-- ── Body section: plain dark background for RSS ── -->
+          <div class="vs-body" id="vs-body">
+            <section id="signage-column" class="vs-column" style="gap:0.6rem;">
+              <!-- RSS card appended here by rss.js -->
+            </section>
+          </div>
+
+        </div>
       </main>
 
       <footer class="vs-footer">
-        <span id="vs-status">Loading configuration…</span>
+        <span id="vs-status">Loading…</span>
+        <span>Vertical mode</span>
       </footer>
+
     </div>
 
+    <script type="module" src="./slideshow.js"></script>
     <script type="module" src="./app.js"></script>
   </body>
 </html>
