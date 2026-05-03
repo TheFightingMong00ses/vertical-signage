@@ -38,10 +38,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  max-width: 480px;
-  margin: 0 auto;
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
+  width: 100%;
   background: var(--bg-deep);
 }
 
