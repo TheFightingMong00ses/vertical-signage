@@ -58,6 +58,8 @@ var NUM_SLOTS = 4;
 var ROTATE_INTERVAL_MS = 10000; // rotate story every 10 seconds
 // Since Steve wanted the feed to move all the way through, the 10 minute refresh interval is no longer necessary.
 // var REFRESH_INTERVAL_MS = 10 * 60 * 1000;
+var feedCache = {};
+var CACHE_TTL_MS = 10*60*1000;
 
 // Each slot tracks its own feed index, article list, article index, and timer
 var slots = [];
@@ -68,6 +70,7 @@ for (var i = 0; i < NUM_SLOTS; i++) {
     articles: [],
     articleIndex: 0,
     rotateTimer: null,
+    retryCount:0
   });
 }
 
@@ -397,7 +400,6 @@ function startRotation(slot) {
     }
   }, ROTATE_INTERVAL_MS);
 }
-
 // ── Per-slot fetch ─────────────────────────────────────────────────────────
 function fetchFeedForSlot(slot) {
   if (slot.rotateTimer) {
@@ -406,15 +408,26 @@ function fetchFeedForSlot(slot) {
   }
 
   var feed = FEEDS[slot.feedIndex];
-  //var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(feed.url);
-
   var label = document.getElementById(slotId(slot.id, "label"));
+
   if (label)
     label.innerHTML =
       '<span class="vs-rss-dot"></span> Loading ' + feed.label + "\u2026";
+  
 
-  fetch("/rss/architecture")
-    .then(function (res) {
+    var cached = feedCache[feed.url];
+    if (cached && Date.now() - cached.time < CACHE_TTL_MS) {
+      slot.articles = cached.articles;
+      slot.articleIndex = 0;
+      var lbl = document.getElementById((slotId(slot.id, "label")));
+      if (lbl) lbl.innerHTML = `<span class="vs-rss-dot"></span> ` + feed.label;
+      startRotation(slot);
+      return;
+    }
+    var PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(feed.url);
+  
+    fetch(PROXY_URL)
+      .then(function (res) {
       if (!res.ok) throw new Error("Network error");
       return res.text();
     })
@@ -422,6 +435,8 @@ function fetchFeedForSlot(slot) {
       var parsed = parseRSS(data);
       if (parsed.length === 0) throw new Error("No articles found");
 
+      feedCache[feed.url] = { articles: parsed, time: Date.now()};
+      slot.retryCount = 0;
       slot.articles = parsed;
       slot.articleIndex = 0;
 
@@ -452,6 +467,7 @@ function fetchFeedForSlot(slot) {
     .catch(function (err) {
       console.error("RSS fetch failed for slot " + slot.id + ":", err);
 
+<<<<<<< HEAD
       var content = document.getElementById(slotId(slot.id, "content"));
       var heading = document.getElementById(slotId(slot.id, "heading"));
       var body = document.getElementById(slotId(slot.id, "body"));
@@ -499,5 +515,41 @@ export function initRSS() {
       }
     };
     fetchFeedForSlot(slot);
+=======
+      // Advance to the next feed and retry after a short delay
+      slot.feedIndex = (slot.feedIndex +1)% FEEDS.length;
+
+      slot.retryCount = (slot.retryCount || 0) + 1;
+      var retryDelay = Math.min(3000 * slot.retryCount, 60000);
+
+      setTimeout(function () {
+        fetchFeedForSlot(slot);
+      }, retryDelay);
+    });
+}
+export function initRSS() {
+  createRSSCard();
+
+    if (card){
+      card.transition = "opacity 0.6s ease";
+      card.style.opacity = "0";
+    }
+
+    var hasRevealed = false;
+  
+
+  slots.forEach(function (slot, index) {
+    slot.onFirstPaintDone = function () {
+      if (!hasRevealed && card) {
+        hasRevealed = true;
+        requestAnimationFrame(function ( {
+          card.style.opacity = "1";
+        }));
+      }
+    }
+    setTimeout(function () {
+      fetchFeedForSlot(slot);
+    }, index * 1500); // 1.5 second gap between each slot
+
   });
 }

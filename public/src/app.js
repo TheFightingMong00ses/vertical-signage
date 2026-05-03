@@ -242,9 +242,6 @@ function loadConfig() {
       setStatus("Config loaded");
 
       const widgets= config.widgets ?? [];
-
-      const weatherConfig = widgets.find((w) => w.type === "weather");
-      const clockConfig = widgets.find((w) => w.type === "clock");
       const rssConfig = widgets.find((w) => w.type === "rss");
 
 
