@@ -4,6 +4,36 @@ A browser-based vertical digital display designed for a door-mounted projector. 
 
 ---
 
+## Calendar Setup
+
+```
+Get API Key from Google
+  1) Go to console.cloud.google.com
+  2) Create or select a project
+  3) On the left menu select API & Services
+  4) On the left menu select Library
+  5) Search for "Google Calendar API"
+  6) Click Enable
+  7) On the left menu select Credentials
+  8) On the top bar, select "Create Credentials"
+  9) Select API Key
+  10) Create API Key name, good idea to select "Google Calendar API" under API restrictions
+  11) Copy the generated API Key, paste the key in app.js on line 11, after const API_KEY
+
+Link Google Calendar
+  1) Go to calendar.google.com
+  2) Open or create desired calendar
+  3) On the top bar, select the settings button, gear icon
+  4) On the left bar, look for "Settings for my Calendars"
+  5) Click on desired calendar
+  6) Under "Access permisions for events" make sure the "Make available to public" is selected
+  7) Also, ensure "See all event details" is selected in the drop down box
+  8) Next scroll down Integrate Calendar and find Calendar ID 
+  9) Copy ID, then paste in app.js on line 12, after const CALENDAR_ID
+```
+
+---
+
 ## Project Structure
 
 ```
