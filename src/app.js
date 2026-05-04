@@ -77,7 +77,7 @@ if (!signageColumn) {
     if (!items || items.length === 0) {
       var empty = document.createElement("p");
       empty.className = "vs-card-body";
-      empty.textContent = "No signage items configured yet.";
+      //empty.textContent = "No signage items configured yet.";
       signageColumn.appendChild(empty);
       document.dispatchEvent(new CustomEvent("vs:config-rendered"));
       setTimeout(setupCalendar, 0);
