@@ -5,9 +5,7 @@
       "provider": "open-meteo",
       "lat": 39.74,
       "lon": -104.9847
-      
     },
-
     {
       "type": "clock",
       "size": 400,
@@ -28,7 +26,15 @@
     }
   ],
   "displaySettings": {
-     "refreshMinutes": 10,
-     "fontScale": 1
+    "refreshMinutes": 10,
+    "fontScale": 1
+  },
+  "slideshow": {
+    "images": [
+      "/images/cat1.jpg",
+      "/images/cat2.jpg",
+      "/images/cat3.jpg"
+    ],
+    "intervalSeconds": 8
   }
 }

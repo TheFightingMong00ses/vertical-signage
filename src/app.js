@@ -1,31 +1,29 @@
-// Basic vertical signage logic using plain JavaScript.
-// Reads configuration from config/config.json and renders "cards" vertically.
+// app.js — core signage logic
 import { initRSS } from "./rss.js";
 import { initWeather, refreshWeather } from "./weather.js";
 import { initClock } from "./clock.js";
+import { initSlideshow } from "./slideshow.js";
 
+// signage-column is now the RSS container in the plain body section
 var signageColumn = document.getElementById("signage-column");
-var statusEl = document.getElementById("vs-status");
+var statusEl      = document.getElementById("vs-status");
 
-const API_KEY = 'AIzaSyA5P7oin4sIt9YIF2duHNnEzKSMTTcDXM0';
+const API_KEY     = 'AIzaSyA5P7oin4sIt9YIF2duHNnEzKSMTTcDXM0';
 const CALENDAR_ID = '822f45b9a5bfd09202fefbe67cf78a0d96861e6ec514f4978c864e5a570f56fd@group.calendar.google.com';
 
-  // -- Helper functions
 if (!signageColumn) {
   throw new Error("signage-column not found");
 }
 
-  function setStatus(message) {
-    if (statusEl) {
-      statusEl.textContent = message;
-    }
-  }
+function setStatus(message) {
+  if (statusEl) statusEl.textContent = message;
+}
 
-  function toLocalDateKey(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+function toLocalDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 // -- Config cards
@@ -98,165 +96,152 @@ if (!signageColumn) {
 // -- Calendar
 
 async function displayWeekView() {
-  const now = new Date();
+  const now     = new Date();
   const weekEnd = new Date(now);
   weekEnd.setDate(weekEnd.getDate() + 7);
 
-  // Build all 7 days upfront regardless of events
   const days = {};
   for (let i = 0; i < 7; i++) {
     const d = new Date(now);
     d.setDate(d.getDate() + i);
-    const key = toLocalDateKey(d);
-    days[key] = []; // start empty, events will fill in if they exist
+    days[toLocalDateKey(d)] = [];
   }
 
-  // Fetch events and slot them into the correct day
   try {
     const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events?key=${API_KEY}&orderBy=startTime&singleEvents=true&timeMin=${now.toISOString()}&timeMax=${weekEnd.toISOString()}`;
     const response = await fetch(url);
-    const data = await response.json();
+    const data     = await response.json();
 
     if (data.items) {
       data.items.forEach(event => {
         const date = (event.start.dateTime || event.start.date).split('T')[0];
-        if (days[date] !== undefined) {
-          days[date].push(event);
-        }
+        if (days[date] !== undefined) days[date].push(event);
       });
     }
   } catch (err) {
     console.error('Calendar fetch failed:', err);
-    // Continue rendering — days will just show as empty
   }
 
-  // Render every day
-  const container = document.getElementById('calendar');
+  const container = document.getElementById('calendar-hero');
+  if (!container) return;
   container.innerHTML = '';
 
-  // Create the grid wrapper
+  // Wrap in a vs-card so it gets the hero glass treatment
+  const card = document.createElement('div');
+  card.className = 'vs-card';
+
+  const label = document.createElement('div');
+  label.className = 'vs-card-title';
+  label.textContent = 'This Week';
+  card.appendChild(label);
+
   const grid = document.createElement('div');
   grid.className = 'vs-calendar-grid';
 
   Object.entries(days).forEach(([date, events]) => {
-    const isToday = date === toLocalDateKey(now);
-    const [year, month, day] = date.split('-').map(Number);
-    const dateObj = new Date(year, month - 1, day);
+    const isToday   = date === toLocalDateKey(now);
+    const [y, mo, d] = date.split('-').map(Number);
+    const dateObj   = new Date(y, mo - 1, d);
 
     const col = document.createElement('div');
     col.className = 'vs-calendar-col' + (isToday ? ' vs-calendar-today' : '');
-     // Day header
-    const header = document.createElement('div');
+
+    const header  = document.createElement('div');
     header.className = 'vs-calendar-col-header';
 
     const dayName = document.createElement('span');
     dayName.className = 'vs-calendar-dayname';
     dayName.textContent = dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
 
-    const dayNum = document.createElement('span');
-    dayNum.className = 'vs-calendar-daynum' + (isToday ? ' vs-calendar-daynum-today' : '');
+    const dayNum  = document.createElement('span');
+    dayNum.className  = 'vs-calendar-daynum' + (isToday ? ' vs-calendar-daynum-today' : '');
     dayNum.textContent = dateObj.getDate();
 
     header.appendChild(dayName);
     header.appendChild(dayNum);
     col.appendChild(header);
 
-    // Events
     if (events.length === 0) {
       const empty = document.createElement('p');
-      empty.className = 'vs-calendar-empty';
+      empty.className   = 'vs-calendar-empty';
       empty.textContent = '';
       col.appendChild(empty);
     } else {
       events.forEach(e => {
-        const event = document.createElement('div');
+        const event    = document.createElement('div');
         event.className = 'vs-calendar-event';
-
         const startTime = e.start.dateTime
           ? new Date(e.start.dateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
           : 'All Day';
-
         event.textContent = `${startTime} ${e.summary}`;
         col.appendChild(event);
       });
     }
+
     grid.appendChild(col);
   });
-container.appendChild(grid);
+
+  card.appendChild(grid);
+  container.appendChild(card);
 }
 
-function setupCalendar(){
-  const rssCard = signageColumn.querySelector('.vs-rss-card');
-
-  const calendarCard = document.createElement('div');
-  calendarCard.id = 'calendar';
-  calendarCard.className = 'vs-card';
-
-  if (rssCard){
-    signageColumn.insertBefore(calendarCard, rssCard);
-  } else {
-    signageColumn.appendChild(calendarCard);
-  }
-
+function setupCalendar() {
   displayWeekView();
   setInterval(displayWeekView, 5 * 60 * 1000);
 }
 
-// -- Config load
+// ── Config ────────────────────────────────────────────────────────────────
+
 function applyDisplaySettings(settings) {
   if (!settings) return;
-  if (typeof settings.fontScale === "number") {
-    document.documentElement.style.setProperty(
-      "--vs-font-scale",
-      String(settings.fontScale),
-    );
+  if (typeof settings.fontScale === 'number') {
+    document.documentElement.style.setProperty('--vs-font-scale', String(settings.fontScale));
   }
 }
 
 function startRefreshCycle(config) {
   const intervalMs = config.displaySettings.refreshMinutes * 60 * 1000;
-
   setInterval(function () {
-    const weatherConfig = config.widgets.find((w) => w.type === "weather");
+    const weatherConfig = config.widgets.find(w => w.type === 'weather');
     if (weatherConfig) refreshWeather(weatherConfig.lat, weatherConfig.lon);
   }, intervalMs);
 }
 
 function loadConfig() {
-  setStatus("Loading configuration…");
+  setStatus('Loading configuration…');
 
-  fetch("../config/config.json", { cache: "no-store" })
-    .then(function (response) {
-      if (!response.ok) {
-        throw new Error("HTTP " + response.status);
-      }
+  fetch('../config/config.json', { cache: 'no-store' })
+    .then(response => {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
       return response.json();
     })
-    .then(function (config) {
+    .then(config => {
       applyDisplaySettings(config.displaySettings);
-      renderItems(config.items);
-      setStatus("Config loaded (" + (config.items || []).length + " items)");
+      setStatus('Config loaded');
 
-  // Clock — prepends to top of column
-      const clockConfig = config.widgets && config.widgets.find((w) => w.type === "clock");
+      // Slideshow — must come first so the bg is ready before widgets render
+      initSlideshow(config);
+
+      // Clock — prepends into hero column
+      const clockConfig = config.widgets && config.widgets.find(w => w.type === 'clock');
       if (clockConfig) initClock(clockConfig);
 
-  // Weather
-      const weatherConfig = config.widgets && config.widgets.find((w) => w.type === "weather");
+      // Weather — prepends into hero column
+      const weatherConfig = config.widgets && config.widgets.find(w => w.type === 'weather');
       if (weatherConfig) {
         initWeather(weatherConfig.lat, weatherConfig.lon);
         startRefreshCycle(config);
       }
 
-  // RSS and calendar via setTimeout so they land below
-      setTimeout(function() {
-       initRSS();
-     }, 0);
-})
-    .catch(function (error) {
-      console.error("Failed to load config:", error);
-      setStatus("Failed to load config. See console.");
-      renderItems([]);
+      // Calendar
+      setupCalendar();
+
+      // RSS — goes into plain body section (signage-column)
+      setTimeout(() => initRSS(), 0);
+    })
+    .catch(error => {
+      console.error('Failed to load config:', error);
+      setStatus('Failed to load config. See console.');
     });
 }
 

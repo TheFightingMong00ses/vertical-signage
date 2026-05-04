@@ -54,8 +54,10 @@ var FEEDS = [
   },
 ];
 
+var feedCache = {};
+var CACHE_TTL_MS = 10*60*1000;
 var NUM_SLOTS = 4;
-var ROTATE_INTERVAL_MS = 8000; // rotate story every 8 seconds
+var ROTATE_INTERVAL_MS = 10000; // rotate story every 10 seconds
 // Since Steve wanted the feed to move all the way through, the 10 minute refresh interval is no longer necessary.
 // var REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
@@ -69,6 +71,28 @@ for (var i = 0; i < NUM_SLOTS; i++) {
     articleIndex: 0,
     rotateTimer: null,
   });
+}
+
+// ── Feed-index cycling ─────────────────────────────────────────────────────
+// Returns the next feed index after `currentIndex` that is not already
+// assigned to another slot, so no source repeats within a full cycle.
+// If every feed is already in use (more slots than feeds), it falls back to
+// simple round-robin to avoid an infinite loop.
+function nextUnusedFeedIndex(currentIndex, excludeSlotId) {
+  var usedIndexes = {};
+  for (var i = 0; i < slots.length; i++) {
+    if (slots[i].id !== excludeSlotId) {
+      usedIndexes[slots[i].feedIndex] = true;
+    }
+  }
+
+  var candidate = (currentIndex + 1) % FEEDS.length;
+  var checked = 0;
+  while (usedIndexes[candidate] && checked < FEEDS.length) {
+    candidate = (candidate + 1) % FEEDS.length;
+    checked++;
+  }
+  return candidate;
 }
 
 // ── RSS parsing helpers ────────────────────────────────────────────────────
@@ -188,12 +212,24 @@ function createSlotDOM(slotIdx) {
   counter.id = slotId(slotIdx, "counter");
   counter.textContent = "";
 
+  var qr = document.createElement("img");
+  qr.className = "vs-rss-qr";
+  qr.id = slotId(slotIdx, "qr");
+  qr.alt = "QR code";
+  qr.style.cssText = "flex-shrink:0;width:80px;height:80px;align-self:center;border-radius:4px;display:none;";
+
+  var textCol = document.createElement("div");
+  textCol.style.cssText = "flex:1;min-width:0;";
+  textCol.appendChild(heading);
+  textCol.appendChild(body);
+  textCol.appendChild(meta);
+
   var content = document.createElement("div");
   content.className = "vs-rss-content";
   content.id = slotId(slotIdx, "content");
-  content.appendChild(heading);
-  content.appendChild(body);
-  content.appendChild(meta);
+  content.style.cssText = "display:flex;align-items:flex-start;gap:0.75rem;transition:opacity 0.55s ease;";
+  content.appendChild(textCol);
+  content.appendChild(qr);
 
   wrapper.appendChild(label);
   wrapper.appendChild(content);
@@ -201,6 +237,22 @@ function createSlotDOM(slotIdx) {
   wrapper.appendChild(counter);
 
   return wrapper;
+}
+
+// -- QR code rendering ------------------------------------------------------
+function renderQR(slotIdx, url) {
+  var img = document.getElementById(slotId(slotIdx, "qr"));
+  if (!img) return;
+  if (!url || url === "#") {
+    img.style.display = "none";
+    img.src = "";
+    return;
+  }
+  img.onload = function () { img.style.display = "block"; };
+  img.onerror = function () { img.style.display = "none"; };
+  img.src =
+    "https://api.qrserver.com/v1/create-qr-code/?size=80x80&ecc=M&data=" +
+    encodeURIComponent(url);
 }
 
 // -- Per-slot article display -----------------------------------------------
@@ -217,40 +269,76 @@ function showArticle(slot) {
 
   if (!heading || !body) return;
 
-  // On the very first article, skip the fade+height animation entirely.
-  // The slot has no real height yet (just rendered "Loading…"), so there's
-  // nothing valid to animate from — attempting it causes the startup jank.
-  // Let it paint once at its natural height, then all subsequent transitions
-  // will be smooth.
-  if (!slot.hasShownFirst) {
+  // On the very first article ever, skip the fade+height animation entirely.
+  // The slot only has "Loading\u2026" placeholder text so there's nothing valid
+  // to animate from \u2014 attempting it causes startup jank.
+  //
+  // hasShownFirst is reset to false on fetch error/retry, but hasRenderedOnce
+  // stays true permanently once a real article has painted. On a retry the
+  // slot already has real content and a valid height, so we fall through to
+  // the normal animated transition instead of snapping in.
+  if (!slot.hasShownFirst && !slot.hasRenderedOnce) {
     slot.hasShownFirst = true;
+    slot.hasRenderedOnce = true;
     heading.textContent = article.title;
     body.textContent = article.description;
     meta.textContent = article.date;
     counter.textContent = slot.articleIndex + 1 + " / " + slot.articles.length;
+    renderQR(slot.id, article.link);
+
     if (slotEl) {
-      // Disable the height transition just for this first paint, then
-      // re-enable it after the browser has had a frame to measure from.
+      // Disable ALL transitions on both the slot and content so we can
+      // measure and set values without any animation interference.
       slotEl.style.transition = "none";
       slotEl.style.height = "auto";
+      if (content) {
+        content.style.transition = "none";
+        content.style.opacity = "0";
+      }
+
       requestAnimationFrame(function () {
-        slotEl.style.transition = "";
+        slotEl.style.height = slotEl.scrollHeight + "px";
+        requestAnimationFrame(function () {
+          setTimeout(function () {
+            // Re-enable transitions, then fade content in on the next frame
+            // so the browser picks up the transition before opacity changes.
+            slotEl.style.transition = "";
+            if (content) content.style.transition = "opacity 0.55s ease";
+            requestAnimationFrame(function () {
+              if (content) content.style.opacity = "1";
+              startProgressBar(slot.id);
+              if (slot.onFirstPaintDone) slot.onFirstPaintDone();
+            });
+          }, 50);
+        });
       });
+    } else {
+      if (content) content.style.opacity = "1";
+      startProgressBar(slot.id);
+      if (slot.onFirstPaintDone) slot.onFirstPaintDone();
     }
-    if (content) content.style.opacity = "1";
-    startProgressBar(slot.id);
+
     return;
   }
 
-  // 1. Fade out content
+  // Mark first paint done — covers both the normal second-article path and
+  // the retry-with-existing-height path that bypassed the cold-start branch.
+  slot.hasShownFirst = true;
+
+  // 1. Fade out content — skip the wait if it's already invisible (e.g. the
+  // fetch success handler pre-faded it before calling startRotation).
+  var alreadyHidden = content && content.style.opacity === "0";
   if (content) content.style.opacity = "0";
 
-  // 2. After fade completes, swap content, measure new height, animate slot
+  // 2. After fade completes (or immediately if already hidden), swap content,
+  // measure new height, animate slot.
+  var swapDelay = alreadyHidden ? 0 : 550;
   setTimeout(function () {
     heading.textContent = article.title;
     body.textContent = article.description;
     meta.textContent = article.date;
     counter.textContent = slot.articleIndex + 1 + " / " + slot.articles.length;
+    renderQR(slot.id, article.link);
 
     if (slotEl) {
       // Lock to current rendered height
@@ -280,7 +368,7 @@ function showArticle(slot) {
       if (content) content.style.opacity = "1";
       startProgressBar(slot.id);
     }
-  }, 550); // match CSS opacity transition duration (0.55s)
+  }, swapDelay); // 550ms to match fade, or 0 if content was pre-faded
 }
 
 function startProgressBar(slotIdx) {
@@ -302,9 +390,9 @@ function startRotation(slot) {
     slot.articleIndex++;
 
     if (slot.articleIndex >= slot.articles.length) {
-      // Done with this feed — move to the next one
+      // Done with this feed — move to the next one not already showing
       slot.articleIndex = 0;
-      slot.feedIndex = (slot.feedIndex + 1) % FEEDS.length;
+      slot.feedIndex = nextUnusedFeedIndex(slot.feedIndex, slot.id);
       fetchFeedForSlot(slot);
     } else {
       showArticle(slot);
@@ -326,6 +414,18 @@ function fetchFeedForSlot(slot) {
   if (label)
     label.innerHTML =
       '<span class="vs-rss-dot"></span> Loading ' + feed.label + "\u2026";
+  var cached = feedCache[feed.url];
+  if (cached && Date.now() - cached.time < CACHE_TTL_MS) {
+    slot.articles = cached.articles;
+    slot.articleIndex = 0;
+
+    var lbl = document.getElementById(slotId(slot.id, "label"));
+    if (lbl)
+      lbl.innerHTML = '<span class="vs-rss-dot"></span> ' + feed.label;
+
+    startRotation(slot);
+    return; 
+  }
 
   fetch(PROXY_URL)
     .then(function (res) {
@@ -336,30 +436,84 @@ function fetchFeedForSlot(slot) {
       var parsed = parseRSS(data);
       if (parsed.length === 0) throw new Error("No articles found");
 
+      feedCache[feed.url] = { articles: parsed, time: Date.now() };
+
       slot.articles = parsed;
       slot.articleIndex = 0;
 
       var lbl = document.getElementById(slotId(slot.id, "label"));
       if (lbl) lbl.innerHTML = '<span class="vs-rss-dot"></span> ' + feed.label;
 
-      startRotation(slot);
+      // If this is a retry (hasRenderedOnce is true), the content is currently
+      // showing the error message at some unknown opacity. Force it to opacity 1
+      // first, then let it fade to 0, so showArticle's normal transition has a
+      // defined visible start state to animate from instead of snapping in.
+      if (slot.hasRenderedOnce) {
+        var contentEl = document.getElementById(slotId(slot.id, "content"));
+        if (contentEl) {
+          contentEl.style.opacity = "1";
+          requestAnimationFrame(function () {
+            contentEl.style.opacity = "0";
+            setTimeout(function () {
+              startRotation(slot);
+            }, 550);
+          });
+        } else {
+          startRotation(slot);
+        }
+      } else {
+        startRotation(slot);
+      }
     })
     .catch(function (err) {
       console.error("RSS fetch failed for slot " + slot.id + ":", err);
-      var heading = document.getElementById(slotId(slot.id, "heading"));
-      if (heading)
-        heading.textContent = "Could not load feed. Trying next\u2026";
 
-      // Advance to the next feed and retry after a short delay
-      slot.feedIndex = (slot.feedIndex + 1) % FEEDS.length;
+      var content = document.getElementById(slotId(slot.id, "content"));
+      var heading = document.getElementById(slotId(slot.id, "heading"));
+      var body = document.getElementById(slotId(slot.id, "body"));
+      var meta = document.getElementById(slotId(slot.id, "meta"));
+
+      // Fade out, swap in the error message, fade back in.
+      if (content) content.style.opacity = "0";
       setTimeout(function () {
-        fetchFeedForSlot(slot);
-      }, 3000);
+        if (heading) heading.textContent = "Could not load feed. Trying next\u2026";
+        if (body) body.textContent = "";
+        if (meta) meta.textContent = "";
+        renderQR(slot.id, null);
+        if (content) content.style.opacity = "1";
+
+        // Reset hasShownFirst so the retry can re-enter the normal animated
+        // path (the cold-start branch is skipped because the slot already has
+        // a real height, so the transition will be smooth either way).
+        slot.hasShownFirst = false;
+        slot.feedIndex = nextUnusedFeedIndex(slot.feedIndex, slot.id);
+        setTimeout(function () {
+          fetchFeedForSlot(slot);
+        }, 3000);
+      }, 550);
     });
 }
 export function initRSS() {
-  createRSSCard();
+  var card = createRSSCard();
+
+  // Start invisible — fade in as soon as the first slot has painted,
+  // so the user sees content as early as possible rather than waiting
+  // for all four fetches to complete.
+  if (card) {
+    card.style.transition = "opacity 0.6s ease";
+    card.style.opacity = "0";
+  }
+
+  var hasRevealed = false;
   slots.forEach(function (slot) {
+    slot.onFirstPaintDone = function () {
+      if (!hasRevealed && card) {
+        hasRevealed = true;
+        requestAnimationFrame(function () {
+          card.style.opacity = "1";
+        });
+      }
+    };
     fetchFeedForSlot(slot);
   });
 }
