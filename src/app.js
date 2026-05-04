@@ -26,7 +26,74 @@ function toLocalDateKey(date) {
   return `${y}-${m}-${d}`;
 }
 
-// ── Calendar ──────────────────────────────────────────────────────────────
+// -- Config cards
+
+  function createCard(item) {
+    var card = document.createElement("article");
+    card.className = "vs-card";
+
+    var title = document.createElement("div");
+    title.className = "vs-card-title";
+    title.textContent = item.section || "Announcement";
+
+    var heading = document.createElement("h2");
+    heading.className = "vs-card-heading";
+    heading.textContent = item.title || "";
+
+    var body = document.createElement("p");
+    body.className = "vs-card-body";
+    body.textContent = item.body || "";
+
+    card.appendChild(title);
+    card.appendChild(heading);
+    card.appendChild(body);
+
+    if (Array.isArray(item.tags) && item.tags.length > 0) {
+      var chipRow = document.createElement("div");
+      chipRow.className = "vs-chip-row";
+
+      item.tags.forEach(function (tag) {
+        var chip = document.createElement("span");
+        chip.className = "vs-chip";
+        chip.textContent = tag;
+        chipRow.appendChild(chip);
+      });
+
+      card.appendChild(chipRow);
+    }
+
+    return card;
+  }
+
+  function renderItems(items) {
+    // Remove only the config-driven cards, not cards added by other scripts
+    var existing = signageColumn.querySelectorAll(".vs-card:not(.vs-rss-card)");
+    existing.forEach(function (el) {
+      el.remove();
+    });
+
+    if (!items || items.length === 0) {
+      var empty = document.createElement("p");
+      empty.className = "vs-card-body";
+      //empty.textContent = "No signage items configured yet.";
+      signageColumn.appendChild(empty);
+      document.dispatchEvent(new CustomEvent("vs:config-rendered"));
+      setTimeout(setupCalendar, 0);
+      return;
+    }
+
+    items.forEach(function (item) {
+      var card = createCard(item);
+      signageColumn.appendChild(card);
+    });
+
+    // Signal that config cards have been rendered so other scripts can
+    // position themselves after them (e.g. the RSS card stays at the bottom).
+    document.dispatchEvent(new CustomEvent("vs:config-rendered"));
+     setTimeout(setupCalendar, 0);
+  }
+
+// -- Calendar
 
 async function displayWeekView() {
   const now     = new Date();
